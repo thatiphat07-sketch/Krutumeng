@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>หลังร้าน POS Dashboard - ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา</title>
+  <title>หลังร้าน POS Dashboard & รายงาน - ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -43,7 +43,7 @@
 <body class="text-gray-800 p-2 md:p-4">
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwH__GfjZFcTfzEBjI0Tm08l_LaBW4ySOPOLS_FZNwGOVY6CsJhoAvERvS4qbOCUbvP/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzsv-OGRAeRPCDkL8auP93xIuvEx2h-sPMHiYFj1gM7nDApc58BsdiOkI6L7Zl_wjSF/exec";
     const ADMIN_PIN = "1234"; // 🔐 PIN เข้าสู่ระบบแอดมิน
   </script>
 
@@ -90,11 +90,14 @@
       <button onclick="switchTab('orders')" id="tab-btn-orders" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap">
         <i class="fa-solid fa-list-check"></i> จัดการออเดอร์
       </button>
+      <button onclick="switchTab('reports')" id="tab-btn-reports" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap">
+        <i class="fa-solid fa-chart-line"></i> รายงานยอดขาย & ประสิทธิภาพ
+      </button>
       <button onclick="switchTab('menu')" id="tab-btn-menu" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-utensils"></i> จัดการเมนูอาหาร, รูปภาพ & CSV
+        <i class="fa-solid fa-utensils"></i> จัดการเมนูอาหาร & CSV
       </button>
       <button onclick="switchTab('settings')" id="tab-btn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-gear"></i> ตั้งค่าร้าน, โลโก้ & เลขบัญชี
+        <i class="fa-solid fa-gear"></i> ตั้งค่าร้าน & บัญชี
       </button>
     </div>
 
@@ -110,7 +113,6 @@
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-        <!-- Header & Bulk Action Bar -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-3">
           <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
             <i class="fa-solid fa-list-check text-orange-600"></i> รายการสั่งซื้อเข้าล่าสุด
@@ -135,9 +137,93 @@
       </div>
     </div>
 
-    <!-- TAB 2: MENU & CSV MANAGEMENT -->
+    <!-- 📊 TAB 2: REPORTS & ANALYTICS -->
+    <div id="tab-reports-content" class="space-y-4 hidden">
+      <!-- Top Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+          <p class="text-xs text-gray-500 font-semibold">ยอดขายรวมสุทธิ</p>
+          <p class="text-xl font-bold text-green-600 mt-1">฿<span id="rpt-total-revenue">0</span></p>
+          <span class="text-[10px] text-gray-400">จากออเดอร์ที่ชำระเงินแล้ว</span>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+          <p class="text-xs text-gray-500 font-semibold">ออเดอร์ทั้งหมด</p>
+          <p class="text-xl font-bold text-orange-600 mt-1"><span id="rpt-total-orders">0</span> ออเดอร์</p>
+          <span class="text-[10px] text-gray-400">สำเร็จแล้ว <span id="rpt-completed-orders">0</span></span>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+          <p class="text-xs text-gray-500 font-semibold">ยอดขายเฉลี่ย/ออเดอร์</p>
+          <p class="text-xl font-bold text-blue-600 mt-1">฿<span id="rpt-avg-order">0</span></p>
+          <span class="text-[10px] text-gray-400">Average Ticket Size</span>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+          <p class="text-xs text-gray-500 font-semibold">รวมจำนวนสินค้าที่ขายได้</p>
+          <p class="text-xl font-bold text-purple-600 mt-1"><span id="rpt-total-items-sold">0</span> ชิ้น</p>
+          <span class="text-[10px] text-gray-400">ทุกรายการเมนูรวมกัน</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Top Selling Products Table -->
+        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+          <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+            <i class="fa-solid fa-trophy text-amber-500"></i> อันดับสินค้าขายดี (Top Selling Products)
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="p-2">อันดับ</th>
+                  <th class="p-2">ชื่อเมนู</th>
+                  <th class="p-2 text-center">จำนวนที่ขาย</th>
+                  <th class="p-2 text-right">ยอดขายรวม</th>
+                </tr>
+              </thead>
+              <tbody id="rpt-top-products-body">
+                <tr><td colspan="4" class="p-4 text-center text-gray-400">ยังไม่มีข้อมูลยอดขาย</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Breakdown Charts / Cards -->
+        <div class="space-y-4">
+          <!-- Category Sales Breakdown -->
+          <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+              <i class="fa-solid fa-pie-chart text-orange-600"></i> สัดส่วนยอดขายตามหมวดหมู่
+            </h3>
+            <div class="space-y-2 text-xs" id="rpt-category-breakdown">
+              <p class="text-center text-gray-400 py-4">ยังไม่มีข้อมูล</p>
+            </div>
+          </div>
+
+          <!-- Order Type Breakdown -->
+          <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
+              <i class="fa-solid fa-motorcycle text-blue-600"></i> สัดส่วนประเภทการรับอาหาร
+            </h3>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs" id="rpt-order-types">
+              <div class="bg-slate-50 p-2.5 rounded-xl border">
+                <p class="text-gray-500 font-semibold">ทานที่ร้าน</p>
+                <p class="text-base font-bold text-slate-800 mt-1" id="rpt-type-dine">0</p>
+              </div>
+              <div class="bg-slate-50 p-2.5 rounded-xl border">
+                <p class="text-gray-500 font-semibold">จัดส่งถึงบ้าน</p>
+                <p class="text-base font-bold text-blue-600 mt-1" id="rpt-type-delivery">0</p>
+              </div>
+              <div class="bg-slate-50 p-2.5 rounded-xl border">
+                <p class="text-gray-500 font-semibold">รับกลับบ้าน</p>
+                <p class="text-base font-bold text-amber-600 mt-1" id="rpt-type-takeaway">0</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MENU & CSV MANAGEMENT -->
     <div id="tab-menu-content" class="space-y-4 hidden">
-      <!-- 📄 CSV Import Box -->
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
           <i class="fa-solid fa-file-csv text-green-600"></i> นำเข้าไฟล์ CSV เมนูอาหาร
@@ -151,13 +237,11 @@
         </div>
       </div>
 
-      <!-- Add / Edit Menu Item Box -->
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2" id="form-menu-title">
           <i class="fa-solid fa-plus-circle text-orange-600"></i> เพิ่ม / แก้ไขรายการเมนูอาหาร & รูปภาพ
         </h3>
 
-        <!-- Preset Menu Select -->
         <div class="bg-orange-50 p-2.5 rounded-xl border border-orange-100 flex flex-col md:flex-row gap-2 items-start md:items-center">
           <label class="text-xs font-bold text-orange-800 whitespace-nowrap"><i class="fa-solid fa-list text-orange-600"></i> เลือกจากเมนูตั้งต้น:</label>
           <select id="preset-menu-select" onchange="onSelectPresetMenu(this)" class="w-full p-2 border rounded-xl text-xs bg-white outline-none focus:ring-2 focus:ring-orange-500">
@@ -181,7 +265,6 @@
           <input type="number" id="add-menu-price" placeholder="ราคา (บาท)" class="p-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-orange-500">
         </div>
 
-        <!-- Image Upload & URL Section -->
         <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
           <div id="menu-img-preview-box" class="w-20 h-20 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm mx-auto md:mx-0">
             🥗
@@ -206,7 +289,6 @@
         </div>
       </div>
 
-      <!-- Current Menu Table -->
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm overflow-x-auto">
         <h3 class="text-sm font-bold text-gray-800 mb-3">รายการเมนูในระบบทั้งหมด</h3>
         <table class="w-full text-left text-xs">
@@ -224,7 +306,7 @@
       </div>
     </div>
 
-    <!-- ⚙️ TAB 3: SETTINGS -->
+    <!-- ⚙️ TAB 4: SETTINGS -->
     <div id="tab-settings-content" class="space-y-4 hidden">
       <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
@@ -232,7 +314,6 @@
         </h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- โลโก้ร้าน -->
           <div class="bg-orange-50 p-3 rounded-xl border border-orange-100 flex items-center gap-4">
             <div id="logo-preview-box" class="w-16 h-16 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm">
               🌶️
@@ -243,7 +324,6 @@
             </div>
           </div>
 
-          <!-- รูปภาพ QR Code ชำระเงิน -->
           <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 flex items-center gap-4">
             <div id="qr-preview-box" class="w-16 h-16 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm">
               📱
@@ -454,7 +534,6 @@
       loadBillConfigToForm();
     }
 
-    // AUTH SYSTEM
     function checkAdminLogin() {
       const pwd = document.getElementById('admin-password').value.trim();
       if (pwd === ADMIN_PIN) {
@@ -478,13 +557,17 @@
       fetchOrders(); renderMenuTable(); populatePresetMenuDropdown(); loadBillConfigToForm();
     }
 
-    // TAB SWITCHER
     function switchTab(tab) {
       document.getElementById('tab-orders-content').classList.toggle('hidden', tab !== 'orders');
+      document.getElementById('tab-reports-content').classList.toggle('hidden', tab !== 'reports');
       document.getElementById('tab-menu-content').classList.toggle('hidden', tab !== 'menu');
       document.getElementById('tab-settings-content').classList.toggle('hidden', tab !== 'settings');
 
       document.getElementById('tab-btn-orders').className = tab === 'orders'
+        ? 'px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap'
+        : 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap';
+
+      document.getElementById('tab-btn-reports').className = tab === 'reports'
         ? 'px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap'
         : 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap';
 
@@ -496,6 +579,7 @@
         ? 'px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap'
         : 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap';
 
+      if(tab === 'reports') generateReports();
       if(tab === 'menu') { renderMenuTable(); populatePresetMenuDropdown(); }
       if(tab === 'settings') loadBillConfigToForm();
     }
@@ -534,13 +618,11 @@
           const currentPayment = localPayments[ord.id] || ord.payment || 'รอชำระเงิน';
           const isChecked = selectedOrderIds.has(ord.id);
 
-          // สีป้ายสถานะครัว
           let badgeColor = 'bg-amber-100 text-amber-700 animate-pulse';
           if(currentStatus === 'กำลังทำ') badgeColor = 'bg-orange-100 text-orange-700';
           if(currentStatus === 'กำลังขนส่ง') badgeColor = 'bg-blue-100 text-blue-700';
           if(currentStatus === 'เสร็จสิ้น') badgeColor = 'bg-green-100 text-green-700';
 
-          // สีป้ายสถานะการชำระเงิน
           let payBadgeColor = 'bg-red-500 text-white';
           if(currentPayment === 'แจ้งโอนแล้ว') payBadgeColor = 'bg-blue-600 text-white animate-pulse';
           if(currentPayment === 'ชำระเงินแล้ว' || currentPayment === '🟢 ชำระแล้ว') payBadgeColor = 'bg-green-600 text-white';
@@ -608,22 +690,110 @@
       } catch(e) {}
     }
 
-    // 🗑️ BULK DELETE FUNCTIONS
-    function toggleOrderSelect(id) {
-      if (selectedOrderIds.has(id)) {
-        selectedOrderIds.delete(id);
+    // 📊 GENERATE REPORTS & ANALYTICS
+    function generateReports() {
+      let totalRev = 0;
+      let totalOrders = currentOrdersData.length;
+      let completedOrders = 0;
+      let totalItemsSold = 0;
+
+      const productSales = {}; // { "ส้มตำไทย": { qty: 10, total: 500 } }
+      const categorySales = {}; // { "ส้มตำ/ตำต่างๆ": 1500 }
+      const typeCounts = { "ทานที่ร้าน": 0, "จัดส่งถึงบ้าน": 0, "รับกลับบ้าน": 0 };
+
+      currentOrdersData.forEach(ord => {
+        const pay = localPayments[ord.id] || ord.payment || '';
+        const status = localStatuses[ord.id] || ord.status || '';
+
+        // นับยอดรวมสำหรับออเดอร์ที่ชำระเงิน/แจ้งโอนแล้ว
+        if (pay === 'ชำระเงินแล้ว' || pay === '🟢 ชำระแล้ว' || pay === 'แจ้งโอนแล้ว') {
+          totalRev += parseFloat(ord.total || 0);
+        }
+
+        if (status === 'เสร็จสิ้น') completedOrders++;
+
+        // ช่องทางการรับอาหาร
+        if (typeCounts[ord.type] !== undefined) {
+          typeCounts[ord.type]++;
+        }
+
+        // นับจำนวนสินค้าขายดี & หมวดหมู่
+        if (ord.items && Array.isArray(ord.items)) {
+          ord.items.forEach(i => {
+            const qty = parseInt(i.qty || 1);
+            const price = parseFloat(i.price || 0) * qty;
+            totalItemsSold += qty;
+
+            if (!productSales[i.name]) {
+              productSales[i.name] = { qty: 0, total: 0 };
+            }
+            productSales[i.name].qty += qty;
+            productSales[i.name].total += price;
+
+            const cat = i.category || 'อื่นๆ';
+            if (!categorySales[cat]) categorySales[cat] = 0;
+            categorySales[cat] += price;
+          });
+        }
+      });
+
+      // อัปเดตการ์ดสรุปยอด
+      document.getElementById('rpt-total-revenue').innerText = totalRev.toLocaleString();
+      document.getElementById('rpt-total-orders').innerText = totalOrders;
+      document.getElementById('rpt-completed-orders').innerText = completedOrders;
+      document.getElementById('rpt-avg-order').innerText = totalOrders > 0 ? (totalRev / totalOrders).toFixed(1) : 0;
+      document.getElementById('rpt-total-items-sold').innerText = totalItemsSold;
+
+      // สรุปตารางสินค้าขายดี
+      const sortedProducts = Object.keys(productSales)
+        .map(name => ({ name, ...productSales[name] }))
+        .sort((a, b) => b.qty - a.qty);
+
+      const rptBody = document.getElementById('rpt-top-products-body');
+      if (sortedProducts.length === 0) {
+        rptBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">ยังไม่มีข้อมูลยอดขาย</td></tr>`;
       } else {
-        selectedOrderIds.add(id);
+        rptBody.innerHTML = sortedProducts.map((p, idx) => `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="p-2 font-bold ${idx < 3 ? 'text-amber-600' : 'text-gray-500'}">#${idx + 1}</td>
+            <td class="p-2 font-semibold text-gray-800">${p.name}</td>
+            <td class="p-2 text-center font-bold text-orange-600">${p.qty} ชิ้น</td>
+            <td class="p-2 text-right font-bold text-green-600">฿${p.total.toLocaleString()}</td>
+          </tr>
+        `).join('');
       }
+
+      // สรุปหมวดหมู่
+      const catBox = document.getElementById('rpt-category-breakdown');
+      const catKeys = Object.keys(categorySales);
+      if (catKeys.length === 0) {
+        catBox.innerHTML = `<p class="text-center text-gray-400 py-4">ยังไม่มีข้อมูล</p>`;
+      } else {
+        catBox.innerHTML = catKeys.map(cat => `
+          <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl border">
+            <span class="font-semibold text-gray-700">${cat}</span>
+            <span class="font-bold text-orange-600">฿${categorySales[cat].toLocaleString()}</span>
+          </div>
+        `).join('');
+      }
+
+      // สรุปประเภทการรับอาหาร
+      document.getElementById('rpt-type-dine').innerText = typeCounts["ทานที่ร้าน"] || 0;
+      document.getElementById('rpt-type-delivery').innerText = typeCounts["จัดส่งถึงบ้าน"] || 0;
+      document.getElementById('rpt-type-takeaway').innerText = typeCounts["รับกลับบ้าน"] || 0;
+    }
+
+    // BULK DELETE FUNCTIONS
+    function toggleOrderSelect(id) {
+      if (selectedOrderIds.has(id)) selectedOrderIds.delete(id);
+      else selectedOrderIds.add(id);
       updateBulkDeleteUI();
     }
 
     function selectCompletedOrders() {
       currentOrdersData.forEach(ord => {
         const currentStatus = localStatuses[ord.id] || ord.status || 'กำลังรอ';
-        if (currentStatus === 'เสร็จสิ้น') {
-          selectedOrderIds.add(ord.id);
-        }
+        if (currentStatus === 'เสร็จสิ้น') selectedOrderIds.add(ord.id);
       });
       fetchOrders();
     }
@@ -636,7 +806,6 @@
 
     async function deleteSelectedOrders() {
       if (selectedOrderIds.size === 0) return;
-      
       if (confirm(`คุณต้องการลบออเดอร์ที่เลือกไว้จำนวน ${selectedOrderIds.size} รายการออกจากระบบใช่หรือไม่?`)) {
         const idsToDelete = Array.from(selectedOrderIds);
         const btn = document.getElementById('btn-delete-bulk');
@@ -646,19 +815,12 @@
 
         try {
           await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              action: "deleteOrders",
-              orderIds: idsToDelete
-            })
+            body: JSON.stringify({ action: "deleteOrders", orderIds: idsToDelete })
           });
 
-          idsToDelete.forEach(id => {
-            delete localStatuses[id];
-            delete localPayments[id];
-          });
+          idsToDelete.forEach(id => { delete localStatuses[id]; delete localPayments[id]; });
           localStorage.setItem('order_statuses', JSON.stringify(localStatuses));
           localStorage.setItem('order_payments', JSON.stringify(localPayments));
 
@@ -670,8 +832,7 @@
         } catch(e) {
           alert('เกิดข้อผิดพลาดในการลบออเดอร์');
         } finally {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
+          btn.innerHTML = originalText; btn.disabled = false;
         }
       }
     }
@@ -746,7 +907,7 @@
       }, 100);
     }
 
-    // 📄 CSV IMPORT FUNCTION
+    // CSV IMPORT FUNCTION
     function importCSVMenu() {
       const fileInput = document.getElementById('csv-file-input');
       const file = fileInput.files[0];
