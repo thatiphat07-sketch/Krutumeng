@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   
-  <!-- Leaflet CSS/JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -21,11 +20,10 @@
 <body class="text-gray-800 pb-24">
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwH__GfjZFcTfzEBjI0Tm08l_LaBW4ySOPOLS_FZNwGOVY6CsJhoAvERvS4qbOCUbvP/exec";
-    let currentSubmittedOrderId = null;
+    const API_URL = "https://script.google.com/macros/s/AKfycbzsv-OGRAeRPCDkL8auP93xIuvEx2h-sPMHiYFj1gM7nDApc58BsdiOkI6L7Zl_wjSF/exec";
+    let currentSubmittedOrderId = localStorage.getItem('last_active_order_id') || null;
     let paymentCheckInterval = null;
     
-    // Leaflet Maps Variables
     let regMap = null, regMarker = null;
     let editMap = null, editMarker = null;
     let userCoords = { lat: 16.023, lng: 101.123 };
@@ -102,7 +100,7 @@
     </div>
   </div>
 
-  <!-- ✏️ MODAL หน้าแก้ไขข้อมูลส่วนตัวลูกค้า (หน้าแยก) -->
+  <!-- ✏️ MODAL แก้ไขข้อมูลส่วนตัว -->
   <div id="edit-profile-modal" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl overflow-y-auto max-h-[90vh]">
       <div class="flex justify-between items-center border-b pb-2">
@@ -177,6 +175,7 @@
 
   <!-- Main Content -->
   <main class="max-w-3xl mx-auto px-4 pt-4">
+    <!-- Banner -->
     <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-4 text-white shadow-md mb-4 flex justify-between items-center">
       <div>
         <span class="bg-white/20 text-[10px] px-2 py-0.5 rounded-full font-semibold">แซ่บสดใหม่ทุกวัน</span>
@@ -200,7 +199,7 @@
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="product-grid"></div>
   </main>
 
-  <!-- Sticky Bottom Cart Bar -->
+  <!-- Bottom Cart Bar -->
   <div id="bottom-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl p-3 z-30 hidden">
     <div class="max-w-3xl mx-auto flex justify-between items-center">
       <div>
@@ -266,20 +265,42 @@
     </div>
   </div>
 
-  <!-- Real-time Payment Check Modal -->
+  <!-- 🔔 REAL-TIME ORDER & PAYMENT STATUS TRACKING MODAL -->
   <div id="qr-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 text-center space-y-3 shadow-2xl overflow-y-auto max-h-[90vh]">
-      <div id="pay-status-icon" class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl animate-pulse">
-        <i class="fa-solid fa-clock"></i>
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 text-center space-y-3.5 shadow-2xl overflow-y-auto max-h-[90vh]">
+      
+      <!-- Icon แสดงสถานะ -->
+      <div id="pay-status-icon" class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
+        <i class="fa-solid fa-utensils"></i>
       </div>
       
-      <h3 class="text-lg font-bold text-gray-800" id="pay-status-title">ส่งสั่งซื้อเรียบร้อยแล้ว!</h3>
-      <p class="text-xs text-gray-500" id="pay-order-id-display"></p>
-      
-      <div id="pay-status-badge" class="inline-block px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-full text-xs">
-        สถานะ: 🔴 รอแอดมินยืนยันการชำระเงิน
+      <div>
+        <h3 class="text-lg font-bold text-gray-800" id="pay-status-title">กำลังติดตามออเดอร์...</h3>
+        <p class="text-xs text-orange-600 font-bold" id="pay-order-id-display"></p>
       </div>
 
+      <!-- 🚦 PROGRESS TRACKER (แสดงสถานะทำอาหาร/ส่ง) -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-left">
+        <p class="text-[11px] font-bold text-gray-700 flex justify-between items-center">
+          <span>🍳 สถานะการปรุงอาหาร:</span>
+          <span id="kitchen-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">กำลังรอ</span>
+        </p>
+
+        <!-- Progress Steps Bar -->
+        <div class="grid grid-cols-4 gap-1 pt-1 text-center text-[9px] font-bold">
+          <div id="step-wait" class="p-1.5 rounded-lg bg-amber-500 text-white">1. กำลังรอ</div>
+          <div id="step-cook" class="p-1.5 rounded-lg bg-gray-200 text-gray-500">2. กำลังทำ</div>
+          <div id="step-ship" class="p-1.5 rounded-lg bg-gray-200 text-gray-500">3. กำลังส่ง</div>
+          <div id="step-done" class="p-1.5 rounded-lg bg-gray-200 text-gray-500">4. เสร็จสิ้น</div>
+        </div>
+      </div>
+
+      <!-- 💳 PAYMENT STATUS BADGE -->
+      <div id="pay-status-badge" class="inline-block px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-full text-xs">
+        สถานะการเงิน: 🔴 รอชำระเงิน
+      </div>
+
+      <!-- Bank / PromptPay Details -->
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-left space-y-2 text-xs">
         <div class="space-y-0.5">
           <p class="font-bold text-gray-700 flex items-center gap-1">
@@ -304,12 +325,14 @@
         </div>
       </div>
 
+      <!-- QR Code Image -->
       <div id="qr-box" class="bg-gray-50 p-2.5 rounded-xl border border-dashed border-gray-300 inline-block w-full">
         <p class="text-[11px] font-bold text-gray-600 mb-1">สแกน QR Code เพื่อชำระเงิน</p>
-        <img id="qr-image" src="" alt="QR Code ชำระเงิน" class="w-44 h-44 mx-auto rounded-lg object-contain border bg-white p-1 shadow-sm">
+        <img id="qr-image" src="" alt="QR Code" class="w-40 h-40 mx-auto rounded-lg object-contain border bg-white p-1 shadow-sm">
         <p class="text-xs font-bold text-gray-700 mt-2">ยอดชำระสุทธิ: <span class="text-orange-600 text-base">฿<span id="qr-amount">0</span></span></p>
       </div>
 
+      <!-- Notify Transfer Button -->
       <button onclick="notifyPaymentDone()" id="btn-notify-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow text-xs flex items-center justify-center gap-1.5">
         <i class="fa-solid fa-circle-check"></i> แจ้งโอนเงินแล้ว (แจ้งแอดมิน)
       </button>
@@ -363,11 +386,8 @@
     }
 
     function handleUserHeaderClick() {
-      if (currentUser) {
-        openEditProfileModal();
-      } else {
-        openAuthModal();
-      }
+      if (currentUser) openEditProfileModal();
+      else openAuthModal();
     }
 
     function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
@@ -416,7 +436,7 @@
         });
       } catch(e) {}
 
-      alert('สมัครสมาชิกและบันทึกข้อมูลเรียบร้อยแล้ว!');
+      alert('สมัครสมาชิกเรียบร้อยแล้ว!');
       btn.innerText = "สมัครสมาชิก & บันทึกข้อมูล"; btn.disabled = false;
       closeAuthModal();
       updateUIForAuth();
@@ -440,15 +460,6 @@
       }
     }
 
-    function handleLogout() {
-      currentUser = null;
-      localStorage.removeItem('pos_current_user');
-      closeEditProfileModal();
-      updateUIForAuth();
-      alert('ออกจากระบบเรียบร้อยแล้ว');
-    }
-
-    // ✏️ ระบบแก้ไขโปรไฟล์ลูกค้า (หน้าแยก)
     function openEditProfileModal() {
       if (!currentUser) return openAuthModal();
 
@@ -471,9 +482,7 @@
       const newPass = document.getElementById('edit-pass').value.trim();
       const newAddress = document.getElementById('edit-address').value.trim();
 
-      if (!newName || !newPhone || !newPass || !newAddress) {
-        return alert('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง');
-      }
+      if (!newName || !newPhone || !newPass || !newAddress) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
 
       const btn = document.getElementById('btn-save-profile');
       btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
@@ -502,7 +511,6 @@
       updateUIForAuth();
     }
 
-    // 🗺️ MAP ENGINE (สมัคร vs แก้ไข)
     function initMap(type) {
       setTimeout(() => {
         const containerId = type === 'reg' ? 'reg-map' : 'edit-map';
@@ -589,7 +597,7 @@
     
     function addToCart(id) {
       if (!currentUser) {
-        alert('กรุณาเข้าสู่ระบบหรือสมัครสมาชิกก่อนเลือกอาหารครับ');
+        alert('กรุณาเข้าสู่ระบบก่อนเลือกอาหารครับ');
         openAuthModal();
         return;
       }
@@ -646,6 +654,7 @@
       alert('คัดลอกเรียบร้อย: ' + txt);
     }
 
+    // 🔔 CHECK ORDER & REAL-TIME TRACKING
     async function openOrderStatusModal() {
       if (!currentSubmittedOrderId) return alert('คุณยังไม่มีออเดอร์ที่สั่งซื้อในขณะนี้ครับ');
       document.getElementById('qr-modal').classList.remove('hidden');
@@ -664,7 +673,7 @@
           body: JSON.stringify({ action: "updateStatus", orderId: currentSubmittedOrderId, payment: "แจ้งโอนแล้ว" })
         });
         document.getElementById('pay-status-badge').className = "inline-block px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded-full text-xs";
-        document.getElementById('pay-status-badge').innerText = "สถานะ: 🔵 แจ้งโอนแล้ว (รอแอดมินตรวจสอบ)";
+        document.getElementById('pay-status-badge').innerText = "สถานะการเงิน: 🔵 แจ้งโอนแล้ว (รอแอดมินตรวจ)";
         alert('แจ้งชำระเงินเรียบร้อยแล้ว!');
       } catch(e) {
         alert('เกิดข้อผิดพลาดในการแจ้งชำระเงิน');
@@ -683,6 +692,7 @@
       const total = cart.reduce((a,b)=>a+(b.price*b.qty), 0);
       const orderId = "ORD-" + Date.now().toString().slice(-4);
       currentSubmittedOrderId = orderId;
+      localStorage.setItem('last_active_order_id', orderId);
 
       const orderType = document.getElementById('order-type').value;
       const userNote = document.getElementById('order-note').value.trim();
@@ -730,13 +740,6 @@
           const ppNumClean = (billConfig.promptpayNum || '').replace(/[^0-9]/g, '');
           qrImgElem.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=PROMPTPAY_${ppNumClean}_${total}`;
         }
-        
-        document.getElementById('pay-status-icon').className = "w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl animate-pulse";
-        document.getElementById('pay-status-icon').innerHTML = `<i class="fa-solid fa-clock"></i>`;
-        document.getElementById('pay-status-title').innerText = "ส่งสั่งซื้อเรียบร้อยแล้ว!";
-        document.getElementById('pay-status-badge').className = "inline-block px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-full text-xs";
-        document.getElementById('pay-status-badge').innerText = "สถานะ: 🔴 รอแอดมินยืนยันการชำระเงิน";
-        document.getElementById('qr-box').style.display = "block";
 
         toggleCart();
         document.getElementById('qr-modal').classList.remove('hidden');
@@ -747,25 +750,75 @@
       finally { btn.innerText = "ยืนยันสั่งอาหาร & ชำระเงิน"; btn.disabled = false; }
     }
 
+    // 🔄 REAL-TIME STATUS POLLING ENGINE
     function startPaymentCheck() {
       if (paymentCheckInterval) clearInterval(paymentCheckInterval);
-      paymentCheckInterval = setInterval(async () => {
+      
+      const checkStatusNow = async () => {
         if (!currentSubmittedOrderId) return;
         try {
           const res = await fetch(API_URL);
           const orders = await res.json();
           const myOrd = orders.find(o => o.id === currentSubmittedOrderId);
-          if (myOrd && (myOrd.payment === 'ชำระเงินแล้ว' || myOrd.payment === '🟢 ชำระแล้ว')) {
-            document.getElementById('pay-status-icon').className = "w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl";
-            document.getElementById('pay-status-icon').innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
-            document.getElementById('pay-status-title').innerText = "ชำระเงินเรียบร้อยแล้ว!";
-            document.getElementById('pay-status-badge').className = "inline-block px-3 py-1 bg-green-100 text-green-800 font-bold rounded-full text-xs";
-            document.getElementById('pay-status-badge').innerText = "สถานะ: 🟢 ชำระเงินสำเร็จแล้ว ขอบคุณครับ";
-            document.getElementById('qr-box').style.display = "none";
-            clearInterval(paymentCheckInterval);
+          
+          if (myOrd) {
+            document.getElementById('pay-order-id-display').innerText = `เลขที่ออเดอร์: ${myOrd.id}`;
+            
+            // 1. อัปเดตการแสดงผลการเงิน
+            const payStatus = myOrd.payment || 'รอชำระเงิน';
+            const payBadge = document.getElementById('pay-status-badge');
+            if (payStatus === 'ชำระเงินแล้ว' || payStatus === '🟢 ชำระแล้ว') {
+              payBadge.className = "inline-block px-3 py-1 bg-green-100 text-green-800 font-bold rounded-full text-xs";
+              payBadge.innerText = "สถานะการเงิน: 🟢 ชำระเงินเรียบร้อยแล้ว";
+              document.getElementById('qr-box').style.display = "none";
+              document.getElementById('btn-notify-pay').style.display = "none";
+            } else if (payStatus === 'แจ้งโอนแล้ว') {
+              payBadge.className = "inline-block px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded-full text-xs";
+              payBadge.innerText = "สถานะการเงิน: 🔵 แจ้งโอนแล้ว (รอแอดมินตรวจ)";
+            } else {
+              payBadge.className = "inline-block px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-full text-xs";
+              payBadge.innerText = "สถานะการเงิน: 🔴 รอชำระเงิน";
+            }
+
+            // 2. อัปเดตการแสดงผลครัว / การจัดส่ง
+            const kStatus = myOrd.status || 'กำลังรอ';
+            document.getElementById('kitchen-status-badge').innerText = kStatus;
+
+            const iconBox = document.getElementById('pay-status-icon');
+            const titleElem = document.getElementById('pay-status-title');
+
+            // Reset Steps Color
+            ['step-wait', 'step-cook', 'step-ship', 'step-done'].forEach(s => {
+              document.getElementById(s).className = "p-1.5 rounded-lg bg-gray-200 text-gray-500";
+            });
+
+            if (kStatus === 'กำลังรอ') {
+              document.getElementById('step-wait').className = "p-1.5 rounded-lg bg-amber-500 text-white font-bold";
+              iconBox.className = "w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl animate-pulse";
+              iconBox.innerHTML = `<i class="fa-solid fa-clock"></i>`;
+              titleElem.innerText = "ได้รับออเดอร์แล้ว (กำลังรอเข้าครัว)";
+            } else if (kStatus === 'กำลังทำ') {
+              document.getElementById('step-cook').className = "p-1.5 rounded-lg bg-orange-500 text-white font-bold";
+              iconBox.className = "w-14 h-14 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce";
+              iconBox.innerHTML = `<i class="fa-solid fa-fire-burner"></i>`;
+              titleElem.innerText = "กำลังปรุงอาหารในครัว... 🍳";
+            } else if (kStatus === 'กำลังขนส่ง') {
+              document.getElementById('step-ship').className = "p-1.5 rounded-lg bg-blue-500 text-white font-bold";
+              iconBox.className = "w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce";
+              iconBox.innerHTML = `<i class="fa-solid fa-motorcycle"></i>`;
+              titleElem.innerText = "กำลังจัดส่งอาหาร / พร้อมเสิร์ฟ 🛵";
+            } else if (kStatus === 'เสร็จสิ้น') {
+              document.getElementById('step-done').className = "p-1.5 rounded-lg bg-green-500 text-white font-bold";
+              iconBox.className = "w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl";
+              iconBox.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+              titleElem.innerText = "ออเดอร์เสร็จสิ้นเรียบร้อยแล้ว ขอบคุณครับ!";
+            }
           }
         } catch(e) {}
-      }, 3000);
+      };
+
+      checkStatusNow();
+      paymentCheckInterval = setInterval(checkStatusNow, 3000);
     }
 
     function closePaymentModal() {
