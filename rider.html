@@ -17,7 +17,7 @@
     // ⚠️ URL Web App จาก Google Apps Script ของคุณ
     const API_URL = "https://script.google.com/macros/s/AKfycbz3gbIzdZxCRXXkvd4waIcZUlogKmcCYfR0dbTiuLzZNmB2t52Nq7AV-lKXxaVIzhwe/exec";
     
-    // สถานะใน Google Sheets ที่ต้องการให้ไรเดอร์มองเห็น (ตรงกับคอลัมน์ status)
+    // สถานะที่ต้องการให้ไรเดอร์มองเห็น (ตรงกับคอลัมน์ D ในชีตของคุณ)
     const TARGET_STATUS = "จัดส่งถึงบ้าน"; 
   </script>
 
@@ -44,7 +44,7 @@
       
       <div class="space-y-2">
         <label class="block text-sm font-bold text-gray-700">
-          <i class="fa-solid fa-camera text-blue-600"></i> ถ่ายรูปหลักฐานการส่ง (วางอาหาร/หน้าบ้าน)
+          <i class="fa-solid fa-camera text-blue-600"></i> ถ่ายรูปหลักฐานการส่ง
         </label>
         <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="previewPhoto(event)" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
         
@@ -53,7 +53,7 @@
         </div>
       </div>
       
-      <textarea id="rider-note" rows="2" placeholder="โน้ตเพิ่มเติม (เช่น วางไว้บนโต๊ะหน้าบ้าน)" class="w-full p-2 border rounded-xl text-xs outline-none focus:border-blue-500"></textarea>
+      <textarea id="rider-note" rows="2" placeholder="โน้ตเพิ่มเติม (เช่น วางไว้หน้าบ้าน)" class="w-full p-2 border rounded-xl text-xs outline-none focus:border-blue-500"></textarea>
 
       <div class="flex gap-2 pt-2">
         <button onclick="closeDeliveryModal()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl text-sm">ยกเลิก</button>
@@ -73,19 +73,22 @@
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
-        console.log("ข้อมูลที่ได้รับจาก API:", data); // ตรวจสอบโครงสร้างใน F12 Console ได้
+        console.log("ข้อมูลที่ได้รับจาก API:", data);
         
         const orders = data.orders || [];
         
-        // กรองออเดอร์ตามสถานะที่กำหนด (TARGET_STATUS)
-        const deliveryJobs = orders;
+        // รองรับทั้งฟิลด์ status และ catagory (เนื่องจากในชีตของคุณสถานะถูกเก็บไว้ที่คอลัมน์ catagory)
+        const deliveryJobs = orders.filter(o => {
+          const statusVal = String(o.status || o.catagory || '').trim();
+          return statusVal === TARGET_STATUS;
+        });
         
         if (deliveryJobs.length === 0) {
           container.innerHTML = `
             <div class="bg-white p-6 rounded-2xl text-center shadow border text-gray-500 space-y-2">
               <i class="fa-solid fa-box-open text-4xl text-gray-300"></i><br>
               <p class="font-bold">ไม่มีงานจัดส่งในขณะนี้</p>
-              <p class="text-xs text-gray-400">สถานะที่ค้นหา: "${TARGET_STATUS}" | ทั้งหมดในระบบ: ${orders.length} รายการ</p>
+              <p class="text-xs text-gray-400">ค้นหาสถานะ: "${TARGET_STATUS}" | ทั้งหมดในระบบ: ${orders.length} รายการ</p>
             </div>`;
           return;
         }
@@ -104,7 +107,7 @@
               <span class="absolute top-3 right-3 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-1 rounded-lg">ยอดเก็บ: ฿${job.total || 0}</span>
               <p class="font-bold text-blue-700">ออเดอร์: ${job.id}</p>
               <p class="text-xs font-semibold text-gray-800"><i class="fa-solid fa-user"></i> ${job.customer || 'ไม่ระบุชื่อ'}</p>
-              <p class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg border"><strong>รายละเอียด/ที่อยู่:</strong> ${noteText}</p>
+              <p class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg border"><strong>รายละเอียด:</strong> ${noteText}</p>
               ${mapBtn}
               <button onclick="openDeliveryModal('${job.id}')" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md text-sm transition">
                 <i class="fa-solid fa-camera"></i> กดเพื่อส่งอาหาร & ถ่ายรูป
@@ -114,7 +117,7 @@
         }).join('');
       } catch (e) {
         console.error(e);
-        container.innerHTML = `<div class="text-red-500 text-center py-4 bg-white p-4 rounded-2xl shadow">โหลดข้อมูลล้มเหลว กรุณาตรวจสอบลิงก์ API หรือสิทธิ์การเข้าถึง Google Apps Script</div>`;
+        container.innerHTML = `<div class="text-red-500 text-center py-4 bg-white p-4 rounded-2xl shadow">โหลดข้อมูลล้มเหลว กรุณาตรวจสอบลิงก์ API หรือสิทธิ์การเข้าถึง</div>`;
       }
     }
 
@@ -189,7 +192,6 @@
       }
     }
 
-    // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้าเว็บ
     fetchJobs();
   </script>
 </body>
