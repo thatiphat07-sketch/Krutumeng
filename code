@@ -1,0 +1,172 @@
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  var orders = [];
+  
+  // ดึงข้อมูลออเดอร์ทั้งหมด (ข้ามแถวหัวข้อ index 0)
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0]) { // ตรวจสอบว่ามี Order ID
+      var items = [];
+      try {
+        items = typeof data[i][5] === 'string' ? JSON.parse(data[i][5]) : data[i][5];
+      } catch(err) { 
+        items = []; 
+      }
+      
+      orders.push({
+        id: data[i][0].toString(),
+        time: data[i][1] ? data[i][1].toString() : '',
+        customer: data[i][2] ? data[i][2].toString() : '',
+        type: data[i][3] ? data[i][3].toString() : '',
+        table: data[i][4] ? data[i][4].toString() : '',
+        items: items,
+        total: data[i][6] || 0,
+        note: data[i][7] ? data[i][7].toString() : '',
+        status: data[i][8] ? data[i][8].toString() : 'กำลังรอ',
+        payment: data[i][9] ? data[i][9].toString() : 'รอชำระเงิน'
+      });
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(orders))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000); // ป้องกันข้อมูลชนกันเวลามีออเดอร์เข้าพร้อมกัน
+  
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var contents = JSON.parse(e.postData.contents);
+    
+    // -------------------------------------------------------------
+    // 1. เพิ่มออเดอร์ใหม่ (addOrder)
+    // -------------------------------------------------------------
+    if (contents.action === "addOrder") {
+      var sheet = ss.getActiveSheet();
+      var ord = contents.order;
+      sheet.appendRow([
+        ord.id.toString(),
+        ord.time || '',
+        ord.customer || '',
+        ord.type || '',
+        ord.table || '',
+        JSON.stringify(ord.items || []),
+        ord.total || 0,
+        ord.note || '',
+        ord.status || 'กำลังรอ',
+        ord.payment || 'รอชำระเงิน'
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "addOrder"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // -------------------------------------------------------------
+    // 2. อัปเดตสถานะออเดอร์ / การชำระเงิน (updateStatus)
+    // -------------------------------------------------------------
+    if (contents.action === "updateStatus") {
+      var sheet = ss.getActiveSheet();
+      var data = sheet.getDataRange().getValues();
+      var targetId = contents.orderId.toString().trim();
+      
+      for (var i = 1; i < data.length; i++) {
+        var rowId = data[i][0].toString().trim();
+        if (rowId === targetId) {
+          if (contents.status !== undefined) {
+            sheet.getRange(i + 1, 9).setValue(contents.status);   // คอลัมน์ I (สถานะครัว)
+          }
+          if (contents.payment !== undefined) {
+            sheet.getRange(i + 1, 10).setValue(contents.payment); // คอลัมน์ J (การชำระเงิน)
+          }
+          break;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "updateStatus"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // -------------------------------------------------------------
+    // 3. ลบออเดอร์ออกจาก Google Sheets (deleteOrders)
+    // -------------------------------------------------------------
+    if (contents.action === "deleteOrders") {
+      var sheet = ss.getActiveSheet();
+      var orderIdsToDelete = contents.orderIds.map(function(id) { return id.toString().trim(); });
+      var data = sheet.getDataRange().getValues();
+      
+      // วนลูปจากล่างขึ้นบนเพื่อป้องกันไม่ให้ Index แถวคลาดเคลื่อนขณะลบ
+      for (var i = data.length - 1; i >= 1; i--) {
+        var rowId = data[i][0].toString().trim();
+        if (orderIdsToDelete.indexOf(rowId) !== -1) {
+          sheet.deleteRow(i + 1);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "deleteOrders"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // -------------------------------------------------------------
+    // 4. บันทึกสมาชิกใหม่ลงแท็บ Users (registerUser)
+    // -------------------------------------------------------------
+    if (contents.action === "registerUser") {
+      var userSheet = ss.getSheetByName("Users") || ss.insertSheet("Users");
+      if (userSheet.getLastRow() === 0) {
+        userSheet.appendRow(["เบอร์โทรศัพท์", "ชื่อ-นามสกุล", "รหัสผ่าน", "ที่อยู่จัดส่ง", "พิกัด GPS"]);
+      }
+      var u = contents.user;
+      userSheet.appendRow([
+        "'" + u.phone, 
+        u.name || '', 
+        u.pass || '', 
+        u.address || '', 
+        JSON.stringify(u.coords || {})
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "registerUser"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // -------------------------------------------------------------
+    // 5. แก้ไขข้อมูลสมาชิกในแท็บ Users (updateUser)
+    // -------------------------------------------------------------
+    if (contents.action === "updateUser") {
+      var userSheet = ss.getSheetByName("Users");
+      if (userSheet) {
+        var data = userSheet.getDataRange().getValues();
+        var u = contents.user;
+        var oldPhone = (contents.oldPhone || u.phone).toString().trim();
+        var found = false;
+
+        for (var i = 1; i < data.length; i++) {
+          var rowPhone = data[i][0].toString().replace("'", "").trim();
+          if (rowPhone === oldPhone) {
+            userSheet.getRange(i + 1, 1).setValue("'" + u.phone);
+            userSheet.getRange(i + 1, 2).setValue(u.name);
+            userSheet.getRange(i + 1, 3).setValue(u.pass);
+            userSheet.getRange(i + 1, 4).setValue(u.address);
+            userSheet.getRange(i + 1, 5).setValue(JSON.stringify(u.coords || {}));
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          userSheet.appendRow([
+            "'" + u.phone, 
+            u.name || '', 
+            u.pass || '', 
+            u.address || '', 
+            JSON.stringify(u.coords || {})
+          ]);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "updateUser"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({result: "error", message: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
