@@ -1,172 +1,270 @@
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  var orders = [];
-  
-  // ดึงข้อมูลออเดอร์ทั้งหมด (ข้ามแถวหัวข้อ index 0)
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0]) { // ตรวจสอบว่ามี Order ID
-      var items = [];
-      try {
-        items = typeof data[i][5] === 'string' ? JSON.parse(data[i][5]) : data[i][5];
-      } catch(err) { 
-        items = []; 
-      }
-      
-      orders.push({
-        id: data[i][0].toString(),
-        time: data[i][1] ? data[i][1].toString() : '',
-        customer: data[i][2] ? data[i][2].toString() : '',
-        type: data[i][3] ? data[i][3].toString() : '',
-        table: data[i][4] ? data[i][4].toString() : '',
-        items: items,
-        total: data[i][6] || 0,
-        note: data[i][7] ? data[i][7].toString() : '',
-        status: data[i][8] ? data[i][8].toString() : 'กำลังรอ',
-        payment: data[i][9] ? data[i][9].toString() : 'รอชำระเงิน'
-      });
+const TABLES_ = ['Users', 'Sessions', 'Menus', 'Orders', 'Settings'];
+const TZ_ = 'Asia/Bangkok';
+
+function setup_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty('SPREADSHEET_ID', ss.getId());
+  ss.setSpreadsheetTimeZone(TZ_);
+
+  TABLES_.forEach(name => {
+    let sh = ss.getSheetByName(name);
+    if (!sh) sh = ss.insertSheet(name);
+    if (sh.getLastRow() === 0) {
+      sh.appendRow(['id', 'json']);
+      sh.setFrozenRows(1);
     }
+  });
+
+  if (!get_('Settings', 'main')) {
+    put_('Settings', {
+      id: 'main',
+      shopName: 'ร้านส้มตำแซ่บ',
+      announcement: 'ยินดีต้อนรับลูกค้าทุกท่าน ส้มตำรสเด็ด จัดส่งไว!',
+      deliveryFee: 3000 // หน่วยสตางค์ (30 บาท)
+    });
   }
-  
-  return ContentService.createTextOutput(JSON.stringify(orders))
-    .setMimeType(ContentService.MimeType.JSON);
+
+  if (!all_('Menus').length) {
+    [
+      ['ส้มตำไทย', 6000, 6],
+      ['ตำปูปลาร้า', 6000, 6],
+      ['ไก่ย่างวิเชียร', 9000, 9],
+      ['ข้าวเหนียวเขาวง', 1000, 1]
+    ].forEach(m => put_('Menus', {
+      id: Utilities.getUuid(),
+      name: m[0],
+      price: m[1],
+      points: m[2],
+      active: true
+    }));
+  }
+  console.log('ตั้งค่าฐานข้อมูลสำเร็จ!');
 }
 
-function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.tryLock(10000); // ป้องกันข้อมูลชนกันเวลามีออเดอร์เข้าพร้อมกัน
-  
+function makeAdmin_() {
+  const phone = phone_(PropertiesService.getScriptProperties().getProperty('ADMIN_PHONE'));
+  const u = all_('Users').find(x => x.phone === phone);
+  if (!u) throw new Error('ไม่พบบัญชีนี้ กรุณาสมัครสมาชิกผ่านหน้าเว็บด้วยเบอร์แอดมินก่อน');
+  u.role = 'ADMIN';
+  u.active = true;
+  put_('Users', u);
+  console.log('ตั้งค่าสิทธิ์แอดมินสำเร็จ!');
+}
+
+function doGet() {
+  return HtmlService.createHtmlFromFile('Index')
+    .setTitle('ระบบร้านส้มตำและ POS')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function api(action, p) {
+  const lock = LockService.getScriptLock();
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var contents = JSON.parse(e.postData.contents);
-    
-    // -------------------------------------------------------------
-    // 1. เพิ่มออเดอร์ใหม่ (addOrder)
-    // -------------------------------------------------------------
-    if (contents.action === "addOrder") {
-      var sheet = ss.getActiveSheet();
-      var ord = contents.order;
-      sheet.appendRow([
-        ord.id.toString(),
-        ord.time || '',
-        ord.customer || '',
-        ord.type || '',
-        ord.table || '',
-        JSON.stringify(ord.items || []),
-        ord.total || 0,
-        ord.note || '',
-        ord.status || 'กำลังรอ',
-        ord.payment || 'รอชำระเงิน'
-      ]);
-      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "addOrder"}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // -------------------------------------------------------------
-    // 2. อัปเดตสถานะออเดอร์ / การชำระเงิน (updateStatus)
-    // -------------------------------------------------------------
-    if (contents.action === "updateStatus") {
-      var sheet = ss.getActiveSheet();
-      var data = sheet.getDataRange().getValues();
-      var targetId = contents.orderId.toString().trim();
-      
-      for (var i = 1; i < data.length; i++) {
-        var rowId = data[i][0].toString().trim();
-        if (rowId === targetId) {
-          if (contents.status !== undefined) {
-            sheet.getRange(i + 1, 9).setValue(contents.status);   // คอลัมน์ I (สถานะครัว)
-          }
-          if (contents.payment !== undefined) {
-            sheet.getRange(i + 1, 10).setValue(contents.payment); // คอลัมน์ J (การชำระเงิน)
-          }
+    p = p || {};
+    if (!lock.tryLock(15000)) throw new Error('ระบบกำลังประมวลผล กรุณาลองใหม่');
+    let res;
+    if (action === 'public') {
+      res = {
+        settings: settings_(),
+        menus: all_('Menus').filter(m => m.active)
+      };
+    } else if (action === 'register') {
+      res = register_(p);
+    } else if (action === 'login') {
+      res = login_(p);
+    } else {
+      const u = auth_(p.token);
+      switch (action) {
+        case 'dashboard': res = dashboard_(u); break;
+        case 'logout':
+          const s = get_('Sessions', hash_(p.token));
+          if (s) { s.expires = 0; put_('Sessions', s); }
+          res = true;
           break;
-        }
+        case 'order':
+          res = createOrder_(u, p);
+          break;
+        case 'posOrder':
+          role_(u, ['ADMIN']);
+          res = createOrder_(u, { ...p, source: 'POS' });
+          break;
+        case 'status':
+          role_(u, ['ADMIN']);
+          res = updateStatus_(p);
+          break;
+        case 'saveMenu':
+          role_(u, ['ADMIN']);
+          res = saveMenu_(p);
+          break;
+        default: throw new Error('ไม่พบคำสั่ง');
       }
-      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "updateStatus"}))
-        .setMimeType(ContentService.MimeType.JSON);
     }
-
-    // -------------------------------------------------------------
-    // 3. ลบออเดอร์ออกจาก Google Sheets (deleteOrders)
-    // -------------------------------------------------------------
-    if (contents.action === "deleteOrders") {
-      var sheet = ss.getActiveSheet();
-      var orderIdsToDelete = contents.orderIds.map(function(id) { return id.toString().trim(); });
-      var data = sheet.getDataRange().getValues();
-      
-      // วนลูปจากล่างขึ้นบนเพื่อป้องกันไม่ให้ Index แถวคลาดเคลื่อนขณะลบ
-      for (var i = data.length - 1; i >= 1; i--) {
-        var rowId = data[i][0].toString().trim();
-        if (orderIdsToDelete.indexOf(rowId) !== -1) {
-          sheet.deleteRow(i + 1);
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "deleteOrders"}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // -------------------------------------------------------------
-    // 4. บันทึกสมาชิกใหม่ลงแท็บ Users (registerUser)
-    // -------------------------------------------------------------
-    if (contents.action === "registerUser") {
-      var userSheet = ss.getSheetByName("Users") || ss.insertSheet("Users");
-      if (userSheet.getLastRow() === 0) {
-        userSheet.appendRow(["เบอร์โทรศัพท์", "ชื่อ-นามสกุล", "รหัสผ่าน", "ที่อยู่จัดส่ง", "พิกัด GPS"]);
-      }
-      var u = contents.user;
-      userSheet.appendRow([
-        "'" + u.phone, 
-        u.name || '', 
-        u.pass || '', 
-        u.address || '', 
-        JSON.stringify(u.coords || {})
-      ]);
-      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "registerUser"}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // -------------------------------------------------------------
-    // 5. แก้ไขข้อมูลสมาชิกในแท็บ Users (updateUser)
-    // -------------------------------------------------------------
-    if (contents.action === "updateUser") {
-      var userSheet = ss.getSheetByName("Users");
-      if (userSheet) {
-        var data = userSheet.getDataRange().getValues();
-        var u = contents.user;
-        var oldPhone = (contents.oldPhone || u.phone).toString().trim();
-        var found = false;
-
-        for (var i = 1; i < data.length; i++) {
-          var rowPhone = data[i][0].toString().replace("'", "").trim();
-          if (rowPhone === oldPhone) {
-            userSheet.getRange(i + 1, 1).setValue("'" + u.phone);
-            userSheet.getRange(i + 1, 2).setValue(u.name);
-            userSheet.getRange(i + 1, 3).setValue(u.pass);
-            userSheet.getRange(i + 1, 4).setValue(u.address);
-            userSheet.getRange(i + 1, 5).setValue(JSON.stringify(u.coords || {}));
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          userSheet.appendRow([
-            "'" + u.phone, 
-            u.name || '', 
-            u.pass || '', 
-            u.address || '', 
-            JSON.stringify(u.coords || {})
-          ]);
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({result: "success", action: "updateUser"}))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
+    return { ok: true, data: res };
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({result: "error", message: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+    return { ok: false, error: err.message };
   } finally {
-    lock.releaseLock();
+    if (lock.hasLock()) lock.releaseLock();
   }
+}
+
+function sheet_(name) {
+  const id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  return SpreadsheetApp.openById(id).getSheetByName(name);
+}
+function all_(name) {
+  const sh = sheet_(name);
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().map(r => JSON.parse(r[1]));
+}
+function get_(name, id) { return all_(name).find(x => x.id === id) || null; }
+function put_(name, obj) {
+  const sh = sheet_(name), json = JSON.stringify(obj);
+  let row = 0, ids = sh.getLastRow() >= 2 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().flat() : [];
+  let idx = ids.indexOf(obj.id);
+  if (idx >= 0) sh.getRange(idx + 2, 1, 1, 2).setValues([[obj.id, json]]);
+  else sh.appendRow([obj.id, json]);
+  return obj;
+}
+function phone_(v) {
+  let s = String(v || '').replace(/[\s-]/g, '');
+  if (s.startsWith('+66')) s = '0' + s.slice(3);
+  if (!/^0[689]\d{8}$/.test(s)) throw new Error('กรุณากรอกเบอร์มือถือ 10 หลักให้ถูกต้อง');
+  return s;
+}
+function hash_(v) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(v))
+    .map(b => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join('');
+}
+function auth_(token) {
+  if (!token) throw new Error('กรุณาเข้าสู่ระบบ');
+  const s = get_('Sessions', hash_(token));
+  if (!s || s.expires < Date.now()) throw new Error('หมดอายุเข้าสู่ระบบ กรุณาเข้าใหม่');
+  const u = get_('Users', s.uid);
+  if (!u || !u.active) throw new Error('บัญชีถูกระงับหรือไม่มีตัวตน');
+  return u;
+}
+function role_(u, roles) { if (!roles.includes(u.role)) throw new Error('ไม่มีสิทธิ์ดำเนินการ'); }
+
+function firebase_(method, phone, pwd) {
+  const key = PropertiesService.getScriptProperties().getProperty('FIREBASE_API_KEY');
+  const email = phone + '@somtam.local';
+  const res = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:' + method + '?key=' + key, {
+    method: 'post', contentType: 'application/json',
+    payload: JSON.stringify({ email, password: pwd, returnSecureToken: true }),
+    muteHttpExceptions: true
+  });
+  const data = JSON.parse(res.getContentText());
+  if (res.getResponseCode() >= 300) {
+    if (method === 'signUp' && data.error.message === 'EMAIL_EXISTS') {
+      return firebase_('signInWithPassword', phone, pwd);
+    }
+    throw new Error('รหัสผ่านหรือเบอร์โทรไม่ถูกต้อง');
+  }
+  return data;
+}
+
+function register_(p) {
+  const phone = phone_(p.phone);
+  const fb = firebase_('signUp', phone, p.password);
+  let u = get_('Users', fb.localId);
+  if (!u) {
+    u = {
+      id: fb.localId, phone, name: p.name,
+      shipping: { address: p.address, lat: p.lat, lng: p.lng },
+      role: 'CUSTOMER', active: true, createdAt: Date.now()
+    };
+    put_('Users', u);
+  }
+  return makeSession_(u);
+}
+
+function login_(p) {
+  const phone = phone_(p.phone);
+  const fb = firebase_('signInWithPassword', phone, p.password);
+  const u = get_('Users', fb.localId);
+  if (!u || !u.active) throw new Error('ไม่พบบัญชีหรือบัญชีถูกระงับ');
+  return makeSession_(u);
+}
+
+function makeSession_(u) {
+  const token = Utilities.getUuid() + Utilities.getUuid();
+  put_('Sessions', { id: hash_(token), uid: u.id, expires: Date.now() + 8 * 3600000 });
+  return { token, user: u };
+}
+
+function settings_() { return get_('Settings', 'main'); }
+
+function createOrder_(u, p) {
+  const menus = all_('Menus');
+  const items = (p.items || []).map(x => {
+    const m = menus.find(y => y.id === x.id && y.active);
+    if (!m) throw new Error('เมนูบางรายการไม่พร้อมขาย');
+    return { id: m.id, name: m.name, price: m.price, points: m.points, qty: Number(x.qty) };
+  }).filter(x => x.qty > 0);
+
+  if (!items.length) throw new Error('ยังไม่ได้เลือกเมนูอาหาร');
+
+  let member = u.role === 'ADMIN' && p.memberPhone ? all_('Users').find(x => x.phone === phone_(p.memberPhone)) : u;
+  const s = settings_();
+  const subtotal = items.reduce((sum, x) => sum + x.price * x.qty, 0);
+  const mode = p.source === 'POS' ? 'IN_STORE' : (p.mode || 'DELIVERY');
+  const fee = mode === 'DELIVERY' ? s.deliveryFee : 0;
+
+  const order = {
+    id: Utilities.getUuid(),
+    uid: member ? member.id : null,
+    name: member ? member.name : (p.source === 'POS' ? 'ลูกค้าหน้าร้าน' : u.name),
+    phone: member ? member.phone : '',
+    source: p.source || 'WEB',
+    mode: mode,
+    shipping: mode === 'DELIVERY' ? (member ? member.shipping : p.shipping) : null,
+    items: items,
+    subtotal: subtotal,
+    deliveryFee: fee,
+    total: subtotal + fee,
+    points: member ? items.reduce((sum, x) => sum + x.points * x.qty, 0) : 0,
+    status: p.source === 'POS' ? 'DONE' : 'NEW',
+    paid: p.source === 'POS',
+    createdAt: Date.now()
+  };
+  put_('Orders', order);
+  return order;
+}
+
+function updateStatus_(p) {
+  const o = get_('Orders', p.id);
+  if (!o) throw new Error('ไม่พบออเดอร์');
+  o.status = p.status;
+  if (p.status === 'DONE') o.paid = true;
+  put_('Orders', o);
+  return true;
+}
+
+function saveMenu_(p) {
+  const old = p.id ? get_('Menus', p.id) : null;
+  return put_('Menus', {
+    id: old ? old.id : Utilities.getUuid(),
+    name: p.name,
+    price: Number(p.price),
+    points: Number(p.points),
+    active: p.active !== false
+  });
+}
+
+function dashboard_(u) {
+  const orders = all_('Orders');
+  const res = { user: u, settings: settings_(), menus: all_('Menus') };
+  if (u.role === 'ADMIN') {
+    res.orders = orders.reverse();
+    const today = Utilities.formatDate(new Date(), TZ_, 'yyyy-MM-dd');
+    const todayOrders = orders.filter(o => o.paid && Utilities.formatDate(new Date(o.createdAt), TZ_, 'yyyy-MM-dd') === today);
+    res.report = {
+      count: todayOrders.length,
+      total: todayOrders.reduce((sum, o) => sum + o.total, 0)
+    };
+  } else {
+    res.orders = orders.filter(o => o.uid === u.id).reverse();
+  }
+  return res;
 }
