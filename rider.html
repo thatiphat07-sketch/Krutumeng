@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rider Delivery App - ร้าน ส.มอเตอร์ไซค์</title>
+  <title>Rider Delivery App - ร้าน กรูตำเอง</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -78,7 +78,7 @@
         const orders = data.orders || [];
         
         // กรองออเดอร์ตามสถานะที่กำหนด (TARGET_STATUS)
-        const deliveryJobs = orders.filter(o => String(o.status || '').trim() === TARGET_STATUS);
+        const deliveryJobs = orders;
         
         if (deliveryJobs.length === 0) {
           container.innerHTML = `
