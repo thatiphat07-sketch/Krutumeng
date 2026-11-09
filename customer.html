@@ -172,6 +172,9 @@
     <div id="category-container" class="flex space-x-2 overflow-x-auto pb-3 mb-4 hide-scrollbar">
       <!-- ปุ่มจะถูกสร้างที่นี่อัตโนมัติ -->
     </div>
+<!-- ========================================== -->
+<!-- 1. HTML ส่วนช่องค้นหาเมนูอาหาร (นำไปวางในตำแหน่งที่ต้องการแสดงช่องค้นหา) -->
+<!-- ========================================== -->
 <div class="mb-4 px-2">
   <input 
     type="text" 
@@ -181,6 +184,34 @@
     class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
   >
 </div>
+
+
+<!-- ========================================== -->
+<!-- 2. โค้ด JavaScript สำหรับกรองเมนูแบบเรียลไทม์ (นำไปวางไว้ในแท็บ <script> ของหน้าเว็บ) -->
+<!-- ========================================== -->
+<script>
+  // ฟังก์ชันค้นหาและกรองเมนูอาหารทันทีที่พิมพ์
+  function filterMenu() {
+    var input = document.getElementById('searchMenuInput');
+    var filter = input.value.toLowerCase().trim();
+    
+    // ดึงการ์ดเมนูทั้งหมดที่มีคลาส menu-item หรืออยู่ในโครงสร้างตาราง
+    var menuItems = document.querySelectorAll('.menu-item, #menuContainer > div, [data-name]');
+    
+    menuItems.forEach(function(item) {
+      // ดึงข้อความและชื่อจาก data-name
+      var text = item.innerText.toLowerCase();
+      var dataName = (item.getAttribute('data-name') || "").toLowerCase();
+      
+      // ถ้าคำที่พิมพ์ตรงกับชื่อเมนูหรือข้อความในการ์ด ให้แสดงผล ถ้าไม่ตรงให้ซ่อน
+      if (text.indexOf(filter) > -1 || dataName.indexOf(filter) > -1) {
+        item.style.display = ""; // แสดงการ์ด
+      } else {
+        item.style.display = "none"; // ซ่อนการ์ด
+      }
+    });
+  }
+</script>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="product-grid"></div>
   </main>
   <!-- Bottom Cart Bar -->
@@ -405,23 +436,6 @@
         document.getElementById('header-user-name').innerText = "เข้าสู่ระบบ";
       }
     }
-    // ฟังก์ชันค้นหาและกรองเมนูอาหารแบบเรียลไทม์
-function filterMenu() {
-  var input = document.getElementById('searchMenuInput');
-  var filter = input.value.toLowerCase().trim();
-  
-  // สมมติว่าการ์ดสินค้าแต่ละชิ้นในหน้าเว็บมี class ชื่อ "menu-item" และมี attribute data-name เก็บชื่อเมนู
-  var menuItems = document.querySelectorAll('.menu-item'); 
-  
-  menuItems.forEach(function(item) {
-    var name = item.getAttribute('data-name') || item.innerText.toLowerCase();
-    if (name.indexOf(filter) > -1) {
-      item.style.display = ""; // แสดงเมนูที่ตรงกับคำค้นหา
-    } else {
-      item.style.display = "none"; // ซ่อนเมนูที่ไม่ตรง
-    }
-  });
-}
 
     function handleUserHeaderClick() {
       if (currentUser) openEditProfileModal();
