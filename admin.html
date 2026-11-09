@@ -44,7 +44,7 @@
 
   <script>
     // ⚠️ นำ URL ใหม่ที่ได้จากการ Deploy มาวางตรงนี้นะครับ
-    const API_URL = "https://script.google.com/macros/s/AKfycbzHVP8byL-oqlkP1uY_3q3lUhFKSCbNr-81nLkbch2K9seB-X69d6cOkbk4j2nY5Cs/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbz3gbIzdZxCRXXkvd4waIcZUlogKmcCYfR0dbTiuLzZNmB2t52Nq7AV-lKXxaVIzhwe/exec";
     const ADMIN_PIN = "1234"; // 🔐 PIN เข้าสู่ระบบแอดมิน
   </script>
 
@@ -173,7 +173,7 @@
                   <th class="p-2">ชื่อเมนู</th>
                   <th class="p-2 text-center">จำนวนที่ขาย</th>
                   <th class="p-2 text-right">ยอดขายรวม</th>
-                </tr>git add .
+                </tr>
               </thead>
               <tbody id="rpt-top-products-body">
                 <tr><td colspan="4" class="p-4 text-center text-gray-400">ยังไม่มีข้อมูลยอดขาย</td></tr>
@@ -195,7 +195,7 @@
       </div>
     </div>
 
-    <!-- 🥗 TAB 3: MENU & CSV MANAGEMENT (ผสานโค้ดอัปโหลดรูปและแก้ไขแล้ว) -->
+    <!-- 🥗 TAB 3: MENU & CSV MANAGEMENT -->
     <div id="tab-menu-content" class="space-y-4 hidden">
       <!-- 📄 CSV Import Box -->
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
@@ -334,7 +334,9 @@
 
   <!-- 🖨️ PRINTABLE RECEIPT TEMPLATE (80mm) -->
   <div id="printable-receipt" class="hidden">
-    <div style="text-align: center; margin-bottom: 4px;" id="rec-logo-container"></div>
+    <!-- 🌟 จุดที่เพิ่มสำหรับแสดงโลโก้ -->
+    <div id="rec-logo-container"></div>
+    
     <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 2px;" id="rec-shop-title">ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา</div>
     <div style="text-align: center; font-size: 10px; margin-bottom: 6px;" id="rec-shop-phone">โทร: 081-394-8240</div>
     <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
@@ -494,7 +496,7 @@
       if(tab === 'settings') loadBillConfigToForm();
     }
 
-    // 🚨 เสียงไซเรน 5 จังหวะ แจ้งเตือนดังๆ
+    // 🚨 เสียงไซเรน
     function playNotificationSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -516,6 +518,14 @@
       try {
         const res = await fetch(API_URL);
         const orders = await res.json();
+        
+        orders.forEach(newOrd => {
+          const oldOrd = currentOrdersData.find(o => o.id === newOrd.id);
+          if (oldOrd && oldOrd.displayTime) {
+            newOrd.displayTime = oldOrd.displayTime;
+          }
+        });
+
         currentOrdersData = orders;
 
         // Auto-Print & Alert on New Orders
@@ -525,10 +535,15 @@
           const newOrders = orders.slice(-newOrdersCount);
           
           newOrders.forEach((newOrd, index) => {
-            if (!newOrd.time || newOrd.time.trim() === '') {
-              newOrd.displayTime = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
-            } else { newOrd.displayTime = newOrd.time; }
-            setTimeout(() => { printThermalReceipt(newOrd.id); }, index * 1500); 
+            if (!newOrd.displayTime) {
+              if (newOrd.timestamp) {
+                const d = new Date(newOrd.timestamp);
+                newOrd.displayTime = d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.';
+              } else { 
+                newOrd.displayTime = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.'; 
+              }
+            }
+            setTimeout(() => { printThermalReceipt(newOrd.id); }, index * 2000); 
           });
         }
         lastOrderCount = orders.length;
@@ -545,7 +560,12 @@
           const isChecked = selectedOrderIds.has(ord.id);
           
           if (!ord.displayTime) {
-            ord.displayTime = ord.time && ord.time.trim() !== '' ? ord.time : new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+            if (ord.timestamp) {
+              const d = new Date(ord.timestamp);
+              ord.displayTime = d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.';
+            } else {
+              ord.displayTime = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.';
+            }
           }
 
           let badgeColor = 'bg-amber-100 text-amber-700 animate-pulse';
@@ -609,7 +629,6 @@
       } catch(e) {}
     }
 
-    // 🗑️ BULK DELETE LOGIC
     function toggleOrderSelect(id) {
       if (selectedOrderIds.has(id)) selectedOrderIds.delete(id);
       else selectedOrderIds.add(id);
@@ -673,6 +692,14 @@
       const ord = currentOrdersData.find(o => o.id === id);
       if(!ord) return;
 
+      // 🌟 ดึงรูปโลโก้มาใส่บิล
+      const logoContainer = document.getElementById('rec-logo-container');
+      if (billConfig.logo) {
+         logoContainer.innerHTML = `<img src="${billConfig.logo}" style="max-width: 100px; height: auto; margin: 0 auto 5px auto; display: block; filter: grayscale(100%);">`;
+      } else {
+         logoContainer.innerHTML = '';
+      }
+
       document.getElementById('rec-shop-title').innerText = billConfig.shopName || "ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา";
       document.getElementById('rec-shop-phone').innerText = "โทร: " + (billConfig.shopPhone || "-");
       document.getElementById('rec-id').innerText = ord.id;
@@ -694,7 +721,12 @@
 
       const receiptElem = document.getElementById('printable-receipt');
       receiptElem.classList.remove('hidden');
-      setTimeout(() => { window.print(); receiptElem.classList.add('hidden'); }, 100);
+      
+      // หน่วงเวลาให้รูปโลโก้โหลดทันก่อนสั่งปริ้น
+      setTimeout(() => { 
+        window.print(); 
+        receiptElem.classList.add('hidden'); 
+      }, 300);
     }
 
     // REPORTS LOGIC
