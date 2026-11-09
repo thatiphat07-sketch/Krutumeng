@@ -753,7 +753,76 @@
       document.getElementById('btn-save-menu').className = "flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm";
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     }
+const API_URL = "https://script.google.com/macros/s/AKfycbyeDO79jBAOBkIAb1Px-gqOKWkFu9YkG75YA1rvG2bZrErYaQGRDf5iGe72rSUovTeIRA/exec";
 
+// ฟังก์ชันดึงข้อมูลออเดอร์จากหลังบ้าน
+async function fetchAdminOrders() {
+  try {
+    let response = await fetch(API_URL);
+    let result = await response.json();
+    
+    console.log("ข้อมูลที่แอดมินดึงมาได้:", result);
+    
+    if (result.status === "success" && result.orders) {
+      renderOrders(result.orders);
+    } else {
+      console.warn("ไม่พบข้อมูลออเดอร์ในระบบ");
+    }
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์:", error);
+  }
+}
+
+// ฟังก์ชันนำข้อมูลออเดอร์มาสร้างแถวตาราง HTML
+function renderOrders(ordersList) {
+  var tbody = document.getElementById('orderTableBody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = ''; // ล้างข้อมูลเก่า
+  
+  if (ordersList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-gray-400">ยังไม่มีรายการออเดอร์ในขณะนี้</td></tr>';
+    return;
+  }
+  
+  // เรียงลำดับจากออเดอร์ล่าสุดขึ้นมาด้านบน (ถ้าต้องการ)
+  ordersList.reverse().forEach(function(order) {
+    var tr = document.createElement('tr');
+    tr.className = "hover:bg-gray-50 transition";
+    
+    // กำหนดสีป้ายสถานะ
+    var statusColor = "bg-yellow-100 text-yellow-800";
+    if (order.status === "เสร็จสิ้น" || order.status === "สำเร็จ") {
+      statusColor = "bg-green-100 text-green-800";
+    } else if (order.status === "กำลังทำ") {
+      statusColor = "bg-blue-100 text-blue-800";
+    }
+    
+    tr.innerHTML = `
+      <td class="p-3 font-semibold text-gray-700">${order.orderId || "-"}</td>
+      <td class="p-3 text-gray-800">${order.customer || "-"}</td>
+      <td class="p-3 text-gray-600">${order.type || "-"} (${order.table || "-"})</td>
+      <td class="p-3 text-gray-800 max-w-xs truncate">${order.items || "-"}</td>
+      <td class="p-3 font-bold text-blue-600">${order.total || 0} ฿</td>
+      <td class="p-3">
+        <span class="px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}">
+          ${order.status || "รอดำเนินการ"}
+        </span>
+      </td>
+      <td class="p-3 text-xs text-gray-400">${order.timestamp || "-"}</td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+}
+
+// โหลดข้อมูลทันทีเมื่อเปิดหน้าเว็บ
+window.addEventListener('DOMContentLoaded', function() {
+  fetchAdminOrders();
+  
+  // ตั้งเวลาดึงข้อมูลใหม่ทุกๆ 5 วินาที (Auto-refresh) อัตโนมัติ
+  setInterval(fetchAdminOrders, 5000);
+});
     // 🌟 ระบบส่งข้อมูลเมนูขึ้น Google Sheets 
     async function syncMenuToCloud(products) {
       document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังซิงค์เมนูให้หน้าลูกค้า...`;
