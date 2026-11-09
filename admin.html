@@ -785,14 +785,6 @@
     tbody.appendChild(tr);
   });
 }
-
-// โหลดข้อมูลทันทีเมื่อเปิดหน้าเว็บ
-window.addEventListener('DOMContentLoaded', function() {
-  fetchAdminOrders();
-  
-  // ตั้งเวลาดึงข้อมูลใหม่ทุกๆ 5 วินาที (Auto-refresh) อัตโนมัติ
-  setInterval(fetchAdminOrders, 5000);
-});
     // 🌟 ระบบส่งข้อมูลเมนูขึ้น Google Sheets 
     async function syncMenuToCloud(products) {
       document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังซิงค์เมนูให้หน้าลูกค้า...`;
