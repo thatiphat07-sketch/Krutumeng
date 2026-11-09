@@ -14,42 +14,39 @@
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <style>
+ <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
 
-    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
-
-    body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
-
-
-
-    /* 🖨️ Thermal Print 80mm Setup */
-
-    @media print {
-
-      html, body { height: auto !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
-
-      @page { size: 80mm auto; margin: 0mm !important; }
-
-      body * { visibility: hidden !important; }
-
-      #printable-receipt, #printable-receipt * { visibility: visible !important; display: block !important; }
-
-      #printable-receipt {
-
-        position: absolute !important; left: 0 !important; top: 0 !important; width: 72mm !important;
-
-        padding: 2mm !important; margin: 0 auto !important; color: #000 !important; background: #fff !important;
-
-        font-family: 'Courier New', Courier, monospace, 'Prompt', sans-serif;
-
-        font-size: 11px !important; line-height: 1.2 !important;
-
-      }
-
-    }
-
-  </style>
-
+    /* 🖨️ Thermal Print 80mm Setup */
+    @media print {
+      html, body {
+        height: auto !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      @page { size: 80mm auto; margin: 0mm !important; }
+      body * { visibility: hidden !important; }
+      #printable-receipt, #printable-receipt * { 
+        visibility: visible !important; 
+        display: block !important;
+      }
+      #printable-receipt {
+        position: absolute !important; 
+        left: 0 !important; 
+        top: 0 !important; 
+        width: 72mm !important;
+        padding: 2mm !important; 
+        margin: 0 auto !important; 
+        color: #000 !important; 
+        background: #fff !important;
+        font-family: 'Courier New', Courier, monospace, 'Prompt', sans-serif;
+        font-size: 11px !important; 
+        line-height: 1.2 !important;
+      }
+    }
+  </style>
 </head>
 
 <body class="text-gray-800 p-2 md:p-4">
