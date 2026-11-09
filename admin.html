@@ -675,7 +675,52 @@
         finally { btn.innerHTML = originalText; btn.disabled = false; }
       }
     }
+// 🌟 ระบบซิงค์เมนูขึ้น Google Sheets
+    async function syncMenuToCloud(products) {
+      document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังซิงค์เมนูให้หน้าลูกค้า...`;
+      try {
+        await fetch(API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: "updateMenu", menu: products })
+        });
+        document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-check-circle text-green-600"></i> ลูกค้าเห็นเมนูนี้แล้ว!`;
+        setTimeout(() => resetMenuForm(), 3000);
+      } catch(e) {
+        alert('เกิดข้อผิดพลาดในการซิงค์ข้อมูลเมนู');
+      }
+    }
 
+    function saveMenuItem() {
+      const editId = document.getElementById('edit-menu-id').value;
+      const name = document.getElementById('add-menu-name').value.trim();
+      const cat = document.getElementById('add-menu-cat').value;
+      const price = parseFloat(document.getElementById('add-menu-price').value);
+      const img = document.getElementById('edit-menu-img-data').value || '🍲';
+
+      if(!name || isNaN(price)) return alert('กรุณากรอกชื่อเมนูและราคาให้ถูกต้อง');
+
+      let products = getStoredProducts();
+      if (editId) {
+        products = products.map(p => p.id == editId ? { ...p, name, category: cat, price, image: img } : p);
+      } else {
+        products.push({ id: Date.now(), name, category: cat, price, image: img });
+      }
+
+      localStorage.setItem('pos_products', JSON.stringify(products));
+      renderMenuTable(); 
+      syncMenuToCloud(products); // ส่งขึ้นระบบลูกค้า
+    }
+
+    function deleteMenuItem(id) {
+      if(confirm('ยืนยันลบเมนูนี้ใช่หรือไม่?')) {
+        let products = getStoredProducts();
+        products = products.filter(p => p.id != id);
+        localStorage.setItem('pos_products', JSON.stringify(products));
+        renderMenuTable();
+        syncMenuToCloud(products); // ส่งลบขึ้นระบบลูกค้า
+      }
+    }
     async function updateOrderStatus(id, newStatus) {
       localStatuses[id] = newStatus; localStorage.setItem('order_statuses', JSON.stringify(localStatuses));
       fetchOrders();
@@ -687,6 +732,38 @@
       fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStatus", orderId: id, payment: newPayStatus }) });
     }
 
+    async function saveBillSettings() {
+      billConfig.shopName = document.getElementById('cfg-shop-name').value.trim();
+      billConfig.shopPhone = document.getElementById('cfg-shop-phone').value.trim();
+      billConfig.bankName = document.getElementById('cfg-bank-name').value.trim();
+      billConfig.accName = document.getElementById('cfg-acc-name').value.trim();
+      billConfig.accNum = document.getElementById('cfg-acc-num').value.trim();
+      billConfig.promptpayName = document.getElementById('cfg-promptpay-name').value.trim();
+      billConfig.promptpayNum = document.getElementById('cfg-promptpay-num').value.trim();
+      if (tempLogoBase64) billConfig.logo = tempLogoBase64;
+      if (tempQRBase64) billConfig.qrImage = tempQRBase64;
+      
+      localStorage.setItem('pos_bill_config', JSON.stringify(billConfig));
+      loadBillConfigToForm();
+
+      // 🌟 ส่งข้อมูลอัปเดตไปให้ลูกค้า (ส่งขึ้น Google Sheets)
+      try {
+        const btn = event.target;
+        const oldText = btn.innerText;
+        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังอัปเดตไปหน้าลูกค้า...`;
+        
+        await fetch(API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: "updateConfig", config: billConfig })
+        });
+        
+        btn.innerText = oldText;
+        alert('บันทึกการตั้งค่าร้าน และอัปเดตให้ลูกค้าเห็นเรียบร้อยแล้ว!');
+      } catch(e) {
+        alert('บันทึกสำเร็จ แต่เกิดข้อผิดพลาดในการอัปเดตข้อมูลขึ้นระบบออนไลน์');
+      }
+    }
     // 🖨️ PRINT RECEIPT 80mm
     function printThermalReceipt(id) {
       const ord = currentOrdersData.find(o => o.id === id);
