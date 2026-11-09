@@ -753,37 +753,6 @@
       document.getElementById('btn-save-menu').className = "flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm";
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     }
-
-  
-  // เรียงลำดับจากออเดอร์ล่าสุดขึ้นมาด้านบน (ถ้าต้องการ)
-  ordersList.reverse().forEach(function(order) {
-    var tr = document.createElement('tr');
-    tr.className = "hover:bg-gray-50 transition";
-    
-    // กำหนดสีป้ายสถานะ
-    var statusColor = "bg-yellow-100 text-yellow-800";
-    if (order.status === "เสร็จสิ้น" || order.status === "สำเร็จ") {
-      statusColor = "bg-green-100 text-green-800";
-    } else if (order.status === "กำลังทำ") {
-      statusColor = "bg-blue-100 text-blue-800";
-    }
-    
-    tr.innerHTML = `
-      <td class="p-3 font-semibold text-gray-700">${order.orderId || "-"}</td>
-      <td class="p-3 text-gray-800">${order.customer || "-"}</td>
-      <td class="p-3 text-gray-600">${order.type || "-"} (${order.table || "-"})</td>
-      <td class="p-3 text-gray-800 max-w-xs truncate">${order.items || "-"}</td>
-      <td class="p-3 font-bold text-blue-600">${order.total || 0} ฿</td>
-      <td class="p-3">
-        <span class="px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}">
-          ${order.status || "รอดำเนินการ"}
-        </span>
-      </td>
-      <td class="p-3 text-xs text-gray-400">${order.timestamp || "-"}</td>
-    `;
-    
-    tbody.appendChild(tr);
-  });
     // 🌟 ระบบส่งข้อมูลเมนูขึ้น Google Sheets 
     async function syncMenuToCloud(products) {
       document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังซิงค์เมนูให้หน้าลูกค้า...`;
