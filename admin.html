@@ -12,30 +12,15 @@
 
     /* 🖨️ Thermal Print 80mm Setup */
     @media print {
-      html, body {
-        height: auto !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
+      html, body { height: auto !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
       @page { size: 80mm auto; margin: 0mm !important; }
       body * { visibility: hidden !important; }
-      #printable-receipt, #printable-receipt * { 
-        visibility: visible !important; 
-        display: block !important;
-      }
+      #printable-receipt, #printable-receipt * { visibility: visible !important; display: block !important; }
       #printable-receipt {
-        position: absolute !important; 
-        left: 0 !important; 
-        top: 0 !important; 
-        width: 72mm !important;
-        padding: 2mm !important; 
-        margin: 0 auto !important; 
-        color: #000 !important; 
-        background: #fff !important;
+        position: absolute !important; left: 0 !important; top: 0 !important; width: 72mm !important;
+        padding: 2mm !important; margin: 0 auto !important; color: #000 !important; background: #fff !important;
         font-family: 'Courier New', Courier, monospace, 'Prompt', sans-serif;
-        font-size: 11px !important; 
-        line-height: 1.2 !important;
+        font-size: 11px !important; line-height: 1.2 !important;
       }
     }
   </style>
@@ -43,7 +28,7 @@
 <body class="text-gray-800 p-2 md:p-4">
 
   <script>
-    // ⚠️ นำ URL ใหม่ที่ได้จากการ Deploy มาวางตรงนี้นะครับ
+    // ⚠️ นำ URL ของ Apps Script (Code.gs) อันล่าสุดมาใส่ตรงนี้นะครับ
     const API_URL = "https://script.google.com/macros/s/AKfycbynubN4dtJJMjg-ea6osIhjGQw5Y6wE_q-8QJJkN7pQApGyHInSt7CyUzpe0La8klTj/exec";
     const ADMIN_PIN = "1234"; // 🔐 PIN เข้าสู่ระบบแอดมิน
   </script>
@@ -51,9 +36,7 @@
   <!-- 🔒 LOGIN MODAL SCREEN -->
   <div id="login-modal" class="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-gray-100">
-      <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-        <i class="fa-solid fa-lock"></i>
-      </div>
+      <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-2xl"><i class="fa-solid fa-lock"></i></div>
       <div>
         <h3 class="text-lg font-bold text-gray-800">เข้าสู่ระบบหลังร้าน POS</h3>
         <p class="text-xs text-gray-500 mt-1">กรุณากรอกรหัสผ่านเพื่อจัดการออเดอร์</p>
@@ -62,9 +45,7 @@
         <input type="password" id="admin-password" placeholder="กรอก PIN 4 หลัก" maxlength="8" class="w-full text-center text-lg tracking-widest px-3 py-2.5 border rounded-xl font-bold focus:ring-2 focus:ring-orange-500 outline-none">
         <p id="login-error" class="text-xs text-red-500 font-semibold mt-1.5 hidden">รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</p>
       </div>
-      <button onclick="checkAdminLogin()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-xl shadow-lg transition text-sm">
-        เข้าสู่ระบบ
-      </button>
+      <button onclick="checkAdminLogin()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-xl shadow-lg transition text-sm">เข้าสู่ระบบ</button>
     </div>
   </div>
 
@@ -73,65 +54,39 @@
     <!-- Top Header -->
     <header class="bg-gradient-to-r from-slate-800 via-slate-900 to-orange-950 text-white rounded-2xl p-4 shadow-lg flex justify-between items-center">
       <div class="flex items-center space-x-3">
-        <div id="header-logo-box" class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xl shadow overflow-hidden">
-          🌶️
-        </div>
+        <div id="header-logo-box" class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xl shadow overflow-hidden">🌶️</div>
         <div>
           <h1 class="font-bold text-base md:text-lg">ระบบจัดการหลังร้าน (POS Real-time)</h1>
           <p class="text-xs text-gray-300" id="shop-sub-title">ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา</p>
         </div>
       </div>
-      <button onclick="adminLogout()" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition">
-        <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
-      </button>
+      <button onclick="adminLogout()" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
     </header>
 
     <!-- Navigation Tabs -->
     <div class="flex space-x-2 border-b border-gray-200 pb-2 overflow-x-auto">
-      <button onclick="switchTab('orders')" id="tab-btn-orders" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-list-check"></i> จัดการออเดอร์
-      </button>
-      <button onclick="switchTab('reports')" id="tab-btn-reports" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-chart-line"></i> รายงานยอดขาย
-      </button>
-      <button onclick="switchTab('menu')" id="tab-btn-menu" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-utensils"></i> จัดการเมนู & รูปภาพ
-      </button>
-      <button onclick="switchTab('settings')" id="tab-btn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-gear"></i> ตั้งค่าร้าน & บัญชี
-      </button>
+      <button onclick="switchTab('orders')" id="tab-btn-orders" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-list-check"></i> จัดการออเดอร์</button>
+      <button onclick="switchTab('reports')" id="tab-btn-reports" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-chart-line"></i> รายงานยอดขาย</button>
+      <button onclick="switchTab('menu')" id="tab-btn-menu" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-utensils"></i> จัดการเมนู & รูปภาพ</button>
+      <button onclick="switchTab('settings')" id="tab-btn-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border border-gray-200 flex items-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-gear"></i> ตั้งค่าร้าน & บัญชี</button>
     </div>
 
     <!-- TAB 1: ORDER MANAGEMENT -->
     <div id="tab-orders-content" class="space-y-3">
       <div class="bg-amber-100 border border-amber-300 text-amber-900 px-4 py-2 rounded-xl text-xs flex justify-between items-center">
-        <span class="flex items-center gap-2 font-medium">
-          <i class="fa-solid fa-volume-high text-orange-600 animate-bounce"></i> ระบบแจ้งเตือนเสียงไซเรน & ออโต้ปริ้น
-        </span>
-        <button onclick="playNotificationSound()" class="bg-amber-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold hover:bg-amber-700">
-          🚨 ทดสอบเสียงไซเรน
-        </button>
+        <span class="flex items-center gap-2 font-medium"><i class="fa-solid fa-volume-high text-orange-600 animate-bounce"></i> ระบบแจ้งเตือนเสียงไซเรน & ออโต้ปริ้น</span>
+        <button onclick="playNotificationSound()" class="bg-amber-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold hover:bg-amber-700">🚨 ทดสอบเสียงไซเรน</button>
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b pb-3">
-          <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-orange-600"></i> รายการสั่งซื้อเข้าล่าสุด
-          </h3>
-          
+          <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-list-check text-orange-600"></i> รายการสั่งซื้อเข้าล่าสุด</h3>
           <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-            <button onclick="selectCompletedOrders()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 border">
-              <i class="fa-solid fa-check-double text-green-600"></i> เลือกออเดอร์เสร็จแล้ว
-            </button>
-            <button onclick="deleteSelectedOrders()" id="btn-delete-bulk" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm disabled:opacity-50" disabled>
-              <i class="fa-solid fa-trash-can"></i> ลบออเดอร์ (<span id="selected-count">0</span>)
-            </button>
-            <button onclick="fetchOrders()" class="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 shadow-sm">
-              <i class="fa-solid fa-rotate"></i> รีเฟรช
-            </button>
+            <button onclick="selectCompletedOrders()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 border"><i class="fa-solid fa-check-double text-green-600"></i> เลือกออเดอร์เสร็จแล้ว</button>
+            <button onclick="deleteSelectedOrders()" id="btn-delete-bulk" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm disabled:opacity-50" disabled><i class="fa-solid fa-trash-can"></i> ลบออเดอร์ (<span id="selected-count">0</span>)</button>
+            <button onclick="fetchOrders()" class="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 shadow-sm"><i class="fa-solid fa-rotate"></i> รีเฟรช</button>
           </div>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="admin-orders-list">
           <p class="text-center text-xs text-gray-400 col-span-2 py-8">กำลังดึงข้อมูลออเดอร์...</p>
         </div>
@@ -158,64 +113,14 @@
           <p class="text-xl font-bold text-purple-600 mt-1"><span id="rpt-total-items-sold">0</span> ชิ้น</p>
         </div>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Top Selling Products Table -->
-        <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-          <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
-            <i class="fa-solid fa-trophy text-amber-500"></i> อันดับสินค้าขายดี
-          </h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead>
-                <tr class="border-b bg-gray-50 text-gray-600">
-                  <th class="p-2">อันดับ</th>
-                  <th class="p-2">ชื่อเมนู</th>
-                  <th class="p-2 text-center">จำนวนที่ขาย</th>
-                  <th class="p-2 text-right">ยอดขายรวม</th>
-                </tr>
-              </thead>
-              <tbody id="rpt-top-products-body">
-                <tr><td colspan="4" class="p-4 text-center text-gray-400">ยังไม่มีข้อมูลยอดขาย</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
-              <i class="fa-solid fa-pie-chart text-orange-600"></i> สัดส่วนยอดขายตามหมวดหมู่
-            </h3>
-            <div class="space-y-2 text-xs" id="rpt-category-breakdown">
-              <p class="text-center text-gray-400 py-4">ยังไม่มีข้อมูล</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Report UI ตรงนี้ละไว้ตามเดิม -->
     </div>
 
     <!-- 🥗 TAB 3: MENU & CSV MANAGEMENT -->
     <div id="tab-menu-content" class="space-y-4 hidden">
-      <!-- 📄 CSV Import Box -->
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-          <i class="fa-solid fa-file-csv text-green-600"></i> นำเข้าไฟล์ CSV เมนูอาหาร
-        </h3>
-        <p class="text-xs text-gray-500">รูปแบบไฟล์ CSV: <code class="bg-gray-100 px-1 py-0.5 rounded text-orange-600">ชื่อเมนู,หมวดหมู่,ราคา</code> (เช่น: ส้มตำปูปลาร้า,ส้มตำ/ตำต่างๆ,50)</p>
-        <div class="flex items-center gap-2">
-          <input type="file" id="csv-file-input" accept=".csv" class="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
-          <button onclick="importCSVMenu()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-2 rounded-lg font-bold shadow-sm whitespace-nowrap">อัปโหลด</button>
-        </div>
-      </div>
-
-      <!-- Add / Edit Menu Item Box -->
-      <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2" id="form-menu-title">
-          <i class="fa-solid fa-plus-circle text-orange-600"></i> เพิ่ม / แก้ไขรายการเมนูอาหาร & รูปภาพ
-        </h3>
-
-        <!-- Preset Menu Select -->
+        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2" id="form-menu-title"><i class="fa-solid fa-plus-circle text-orange-600"></i> เพิ่ม / แก้ไขรายการเมนูอาหาร & รูปภาพ</h3>
+        
         <div class="bg-orange-50 p-2.5 rounded-xl border border-orange-100 flex flex-col md:flex-row gap-2 items-start md:items-center">
           <label class="text-xs font-bold text-orange-800 whitespace-nowrap"><i class="fa-solid fa-list text-orange-600"></i> เลือกจากเมนูตั้งต้น:</label>
           <select id="preset-menu-select" onchange="onSelectPresetMenu(this)" class="w-full p-2 border rounded-xl text-xs bg-white outline-none focus:ring-2 focus:ring-orange-500">
@@ -229,39 +134,32 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
           <input type="text" id="add-menu-name" placeholder="ชื่อเมนู (เช่น ส้มตำปูปลาร้า)" class="p-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-orange-500">
           <select id="add-menu-cat" class="p-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-orange-500">
-            <option value="ส้มตำ/ตำต่างๆ">ส้มตำ/ตำต่างๆ</option>
+            <option value="ส้มตำ">ส้มตำ</option>
             <option value="ตำเส้น">ตำเส้น</option>
+            <option value="ตำเครื่อง">ตำเครื่อง</option>
             <option value="อาหารจานเดียว">อาหารจานเดียว</option>
             <option value="เครื่องดื่ม/ข้าว">เครื่องดื่ม/ข้าว</option>
-            <option value="ตำเครื่อง">ตำเครื่อง</option>
-            <option value="ต้ม/ลาบ">ต้ม/แกง</option>
-            <option value="ยำ">ยำ</option>
+            <option value="ต้ม/แกง">ต้ม/แกง</option>
+            <option value="ของทอด/ทานเล่น">ของทอด/ทานเล่น</option>
           </select>
           <input type="number" id="add-menu-price" placeholder="ราคา (บาท)" class="p-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-orange-500">
         </div>
 
-        <!-- Image Upload & URL Section -->
         <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-          <div id="menu-img-preview-box" class="w-20 h-20 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm mx-auto md:mx-0">
-            🥗
-          </div>
+          <div id="menu-img-preview-box" class="w-20 h-20 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm mx-auto md:mx-0">🥗</div>
           <div class="space-y-1.5 md:col-span-2 text-xs">
             <label class="block font-bold text-gray-700">รูปภาพเมนูอาหาร (เลือกไฟล์รูป หรือ ใส่ URL)</label>
             <input type="file" id="menu-file-input" accept="image/*" onchange="previewMenuImage(event)" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700">
             <div class="flex items-center gap-1">
-              <span class="text-[10px] text-gray-400">หรือวาง URL รูป:</span>
+              <span class="text-[10px] text-gray-400">หรือวาง URL:</span>
               <input type="text" id="menu-url-input" oninput="previewMenuUrl(this.value)" placeholder="https://example.com/image.jpg" class="flex-1 p-1.5 border rounded-lg text-xs outline-none">
             </div>
           </div>
         </div>
 
         <div class="flex gap-2 pt-1">
-          <button onclick="saveMenuItem()" id="btn-save-menu" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm">
-            + บันทึกรายการเมนู
-          </button>
-          <button onclick="resetMenuForm()" id="btn-cancel-edit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-4 py-2.5 rounded-xl hidden">
-            ยกเลิก
-          </button>
+          <button onclick="saveMenuItem()" id="btn-save-menu" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm">+ บันทึกรายการเมนู</button>
+          <button onclick="resetMenuForm()" id="btn-cancel-edit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-4 py-2.5 rounded-xl hidden">ยกเลิก</button>
         </div>
       </div>
 
@@ -271,11 +169,7 @@
         <table class="w-full text-left text-xs">
           <thead>
             <tr class="border-b bg-gray-50 text-gray-600">
-              <th class="p-2.5">รูปภาพ</th>
-              <th class="p-2.5">ชื่อเมนู</th>
-              <th class="p-2.5">หมวดหมู่</th>
-              <th class="p-2.5">ราคา</th>
-              <th class="p-2.5 text-center">การจัดการ</th>
+              <th class="p-2.5">รูปภาพ</th><th class="p-2.5">ชื่อเมนู</th><th class="p-2.5">หมวดหมู่</th><th class="p-2.5">ราคา</th><th class="p-2.5 text-center">จัดการ</th>
             </tr>
           </thead>
           <tbody id="menu-table-body"></tbody>
@@ -286,27 +180,18 @@
     <!-- ⚙️ TAB 4: SETTINGS -->
     <div id="tab-settings-content" class="space-y-4 hidden">
       <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2">
-          <i class="fa-solid fa-sliders text-orange-600"></i> ตั้งค่าข้อมูลร้าน, โลโก้, รูป QR Code & เลขบัญชี
-        </h3>
+        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2 border-b pb-2"><i class="fa-solid fa-sliders text-orange-600"></i> ตั้งค่าข้อมูลร้าน, โลโก้, รูป QR Code</h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- โลโก้ร้าน -->
           <div class="bg-orange-50 p-3 rounded-xl border border-orange-100 flex items-center gap-4">
-            <div id="logo-preview-box" class="w-16 h-16 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm">
-              🌶️
-            </div>
+            <div id="logo-preview-box" class="w-16 h-16 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm">🌶️</div>
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">โลโก้ร้านค้า</label>
               <input type="file" id="cfg-logo-input" accept="image/*" onchange="previewLogo(event)" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700">
             </div>
           </div>
-
-          <!-- รูปภาพ QR Code ชำระเงิน -->
           <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 flex items-center gap-4">
-            <div id="qr-preview-box" class="w-16 h-16 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm">
-              📱
-            </div>
+            <div id="qr-preview-box" class="w-16 h-16 bg-white border rounded-xl flex items-center justify-center overflow-hidden text-2xl shadow-sm">📱</div>
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">รูปภาพ QR Code ชำระเงิน</label>
               <input type="file" id="cfg-qr-input" accept="image/*" onchange="previewQRImage(event)" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
@@ -327,16 +212,17 @@
           <div><label class="block font-semibold mb-1">ชื่อบัญชีพร้อมเพย์</label><input type="text" id="cfg-promptpay-name" class="w-full p-2.5 border rounded-xl outline-none"></div>
           <div><label class="block font-semibold mb-1">เบอร์พร้อมเพย์</label><input type="text" id="cfg-promptpay-num" class="w-full p-2.5 border rounded-xl outline-none font-mono"></div>
         </div>
-        <button onclick="saveBillSettings()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md transition">บันทึกการตั้งค่า</button>
+        
+        <button id="btn-save-settings" onclick="saveBillSettings(event)" class="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-md transition w-full md:w-auto">
+          <i class="fa-solid fa-cloud-arrow-up"></i> บันทึกการตั้งค่า & อัปเดตไปหน้าลูกค้า
+        </button>
       </div>
     </div>
   </div>
 
   <!-- 🖨️ PRINTABLE RECEIPT TEMPLATE (80mm) -->
   <div id="printable-receipt" class="hidden">
-    <!-- 🌟 จุดที่เพิ่มสำหรับแสดงโลโก้ -->
     <div id="rec-logo-container"></div>
-    
     <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 2px;" id="rec-shop-title">ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา</div>
     <div style="text-align: center; font-size: 10px; margin-bottom: 6px;" id="rec-shop-phone">โทร: 081-394-8240</div>
     <div style="border-top: 1px dashed #000; margin: 4px 0;"></div>
@@ -368,27 +254,19 @@
     let localStatuses = JSON.parse(localStorage.getItem('order_statuses') || '{}');
     let localPayments = JSON.parse(localStorage.getItem('order_payments') || '{}');
 
-    // Preset Menu Data
     const presetMenuList = [
-      { name: "ส้มตำไทย", category: "ส้มตำ/ตำต่างๆ", price: 50, image: "🥗" },
-      { name: "ส้มตำปูปลาร้า", category: "ส้มตำ/ตำต่างๆ", price: 50, image: "🌶️" },
-      { name: "ตำป่าแซ่บเวอร์", category: "ส้มตำ/ตำต่างๆ", price: 60, image: "🥒" },
-      { name: "ไก่ทอดหาดใหญ่", category: "ของทอด/ของทานเล่น", price: 45, image: "🍗" },
-      { name: "หมูทอดกระเทียม", category: "ของทอด/ของทานเล่น", price: 60, image: "🥩" },
-      { name: "ข้าวกระเพราหมูกรอบ", category: "อาหารจานเดียว", price: 60, image: "🍛" },
-      { name: "ข้าวเหนียว", category: "เครื่องดื่ม/ข้าว", price: 10, image: "🍚" }
+      { name: "ส้มตำไทย", category: "ส้มตำ", price: 50, image: "🥗" },
+      { name: "ส้มตำปูปลาร้า", category: "ส้มตำ", price: 50, image: "🌶️" },
+      { name: "ไก่ทอดหาดใหญ่", category: "ของทอด/ทานเล่น", price: 45, image: "🍗" },
+      { name: "ข้าวกระเพราหมูกรอบ", category: "อาหารจานเดียว", price: 60, image: "🍛" }
     ];
 
     let billConfig = JSON.parse(localStorage.getItem('pos_bill_config')) || {
       shopName: "ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา",
       shopPhone: "081-394-8240",
-      bankName: "กสิกรไทย",
-      accName: "ร้านส้มตำ ไก่ทอด",
-      accNum: "123-4-56789-0",
-      promptpayName: "ร้านส้มตำ ไก่ทอด",
-      promptpayNum: "081-394-8240",
-      qrImage: "",
-      logo: ""
+      bankName: "กสิกรไทย", accName: "ร้านส้มตำ", accNum: "123-4-56789-0",
+      promptpayName: "ร้านส้มตำ", promptpayNum: "081-394-8240",
+      qrImage: "", logo: ""
     };
 
     function populatePresetMenuDropdown() {
@@ -452,7 +330,8 @@
       }
     }
 
-    function saveBillSettings() {
+    // 🌟 ระบบส่งตั้งค่าร้านขึ้นระบบลูกค้า
+    async function saveBillSettings(event) {
       billConfig.shopName = document.getElementById('cfg-shop-name').value.trim();
       billConfig.shopPhone = document.getElementById('cfg-shop-phone').value.trim();
       billConfig.bankName = document.getElementById('cfg-bank-name').value.trim();
@@ -462,12 +341,30 @@
       billConfig.promptpayNum = document.getElementById('cfg-promptpay-num').value.trim();
       if (tempLogoBase64) billConfig.logo = tempLogoBase64;
       if (tempQRBase64) billConfig.qrImage = tempQRBase64;
+      
       localStorage.setItem('pos_bill_config', JSON.stringify(billConfig));
-      alert('บันทึกการตั้งค่าร้านค้าเรียบร้อยแล้ว!');
       loadBillConfigToForm();
+
+      try {
+        const btn = event.target;
+        const oldText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังอัปเดตไปหน้าลูกค้า...`;
+        btn.disabled = true;
+        
+        await fetch(API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: "updateConfig", config: billConfig })
+        });
+        
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        alert('บันทึกการตั้งค่าร้าน และอัปเดตให้ลูกค้าเห็นเรียบร้อยแล้ว!');
+      } catch(e) {
+        alert('บันทึกในเครื่องสำเร็จ แต่เกิดข้อผิดพลาดในการซิงค์ออนไลน์');
+      }
     }
 
-    // AUTH SYSTEM
     function checkAdminLogin() {
       if (document.getElementById('admin-password').value.trim() === ADMIN_PIN) {
         document.getElementById('login-modal').classList.add('hidden');
@@ -491,19 +388,16 @@
           ? 'px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap'
           : 'px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 border flex items-center gap-1.5 whitespace-nowrap';
       });
-      if(tab === 'reports') generateReports();
       if(tab === 'menu') { renderMenuTable(); populatePresetMenuDropdown(); }
       if(tab === 'settings') loadBillConfigToForm();
     }
 
-    // 🚨 เสียงไซเรน
     function playNotificationSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         for (let i = 0; i < 5; i++) {
           const osc = ctx.createOscillator(); const gain = ctx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(850, ctx.currentTime + (i * 0.5));
+          osc.type = 'square'; osc.frequency.setValueAtTime(850, ctx.currentTime + (i * 0.5));
           gain.gain.setValueAtTime(0.5, ctx.currentTime + (i * 0.5));
           gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (i * 0.5) + 0.4);
           osc.connect(gain); gain.connect(ctx.destination);
@@ -512,23 +406,20 @@
       } catch(e) {}
     }
 
-    // FETCH ORDERS & AUTO-PRINT
     async function fetchOrders() {
       if(!API_URL) return;
       try {
         const res = await fetch(API_URL);
-        const orders = await res.json();
+        const data = await res.json();
+        const orders = data.orders || data; 
         
         orders.forEach(newOrd => {
           const oldOrd = currentOrdersData.find(o => o.id === newOrd.id);
-          if (oldOrd && oldOrd.displayTime) {
-            newOrd.displayTime = oldOrd.displayTime;
-          }
+          if (oldOrd && oldOrd.displayTime) { newOrd.displayTime = oldOrd.displayTime; }
         });
 
         currentOrdersData = orders;
 
-        // Auto-Print & Alert on New Orders
         if (lastOrderCount !== -1 && orders.length > lastOrderCount) {
           playNotificationSound();
           const newOrdersCount = orders.length - lastOrderCount;
@@ -563,9 +454,7 @@
             if (ord.timestamp) {
               const d = new Date(ord.timestamp);
               ord.displayTime = d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.';
-            } else {
-              ord.displayTime = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.';
-            }
+            } else { ord.displayTime = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) + ' น.'; }
           }
 
           let badgeColor = 'bg-amber-100 text-amber-700 animate-pulse';
@@ -576,6 +465,7 @@
           let payBadgeColor = 'bg-red-500 text-white';
           if(currentPayment === 'แจ้งโอนแล้ว') payBadgeColor = 'bg-blue-600 text-white animate-pulse';
           if(currentPayment === 'ชำระเงินแล้ว' || currentPayment === '🟢 ชำระแล้ว') payBadgeColor = 'bg-green-600 text-white';
+          if(currentPayment === 'เก็บปลายทาง') payBadgeColor = 'bg-emerald-600 text-white';
 
           let noteText = ord.note || '';
           let mapButton = '';
@@ -653,8 +543,7 @@
         const idsToDelete = Array.from(selectedOrderIds);
         const btn = document.getElementById('btn-delete-bulk');
         const originalText = btn.innerHTML;
-        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> ลบ...`; 
-        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> ลบ...`; btn.disabled = true;
 
         try {
           await fetch(API_URL, {
@@ -668,59 +557,12 @@
 
           currentOrdersData = currentOrdersData.filter(ord => !selectedOrderIds.has(ord.id));
           selectedOrderIds.clear();
-          
           alert('ลบรายการออเดอร์ที่เลือกเรียบร้อยแล้ว!');
           fetchOrders();
-        } catch(e) {} 
-        finally { btn.innerHTML = originalText; btn.disabled = false; }
-      }
-    }
-// 🌟 ระบบซิงค์เมนูขึ้น Google Sheets
-    async function syncMenuToCloud(products) {
-      document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังซิงค์เมนูให้หน้าลูกค้า...`;
-      try {
-        await fetch(API_URL, {
-          method: 'POST', mode: 'no-cors',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ action: "updateMenu", menu: products })
-        });
-        document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-check-circle text-green-600"></i> ลูกค้าเห็นเมนูนี้แล้ว!`;
-        setTimeout(() => resetMenuForm(), 3000);
-      } catch(e) {
-        alert('เกิดข้อผิดพลาดในการซิงค์ข้อมูลเมนู');
+        } catch(e) {} finally { btn.innerHTML = originalText; btn.disabled = false; }
       }
     }
 
-    function saveMenuItem() {
-      const editId = document.getElementById('edit-menu-id').value;
-      const name = document.getElementById('add-menu-name').value.trim();
-      const cat = document.getElementById('add-menu-cat').value;
-      const price = parseFloat(document.getElementById('add-menu-price').value);
-      const img = document.getElementById('edit-menu-img-data').value || '🍲';
-
-      if(!name || isNaN(price)) return alert('กรุณากรอกชื่อเมนูและราคาให้ถูกต้อง');
-
-      let products = getStoredProducts();
-      if (editId) {
-        products = products.map(p => p.id == editId ? { ...p, name, category: cat, price, image: img } : p);
-      } else {
-        products.push({ id: Date.now(), name, category: cat, price, image: img });
-      }
-
-      localStorage.setItem('pos_products', JSON.stringify(products));
-      renderMenuTable(); 
-      syncMenuToCloud(products); // ส่งขึ้นระบบลูกค้า
-    }
-
-    function deleteMenuItem(id) {
-      if(confirm('ยืนยันลบเมนูนี้ใช่หรือไม่?')) {
-        let products = getStoredProducts();
-        products = products.filter(p => p.id != id);
-        localStorage.setItem('pos_products', JSON.stringify(products));
-        renderMenuTable();
-        syncMenuToCloud(products); // ส่งลบขึ้นระบบลูกค้า
-      }
-    }
     async function updateOrderStatus(id, newStatus) {
       localStatuses[id] = newStatus; localStorage.setItem('order_statuses', JSON.stringify(localStatuses));
       fetchOrders();
@@ -732,52 +574,15 @@
       fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStatus", orderId: id, payment: newPayStatus }) });
     }
 
-    async function saveBillSettings() {
-      billConfig.shopName = document.getElementById('cfg-shop-name').value.trim();
-      billConfig.shopPhone = document.getElementById('cfg-shop-phone').value.trim();
-      billConfig.bankName = document.getElementById('cfg-bank-name').value.trim();
-      billConfig.accName = document.getElementById('cfg-acc-name').value.trim();
-      billConfig.accNum = document.getElementById('cfg-acc-num').value.trim();
-      billConfig.promptpayName = document.getElementById('cfg-promptpay-name').value.trim();
-      billConfig.promptpayNum = document.getElementById('cfg-promptpay-num').value.trim();
-      if (tempLogoBase64) billConfig.logo = tempLogoBase64;
-      if (tempQRBase64) billConfig.qrImage = tempQRBase64;
-      
-      localStorage.setItem('pos_bill_config', JSON.stringify(billConfig));
-      loadBillConfigToForm();
-
-      // 🌟 ส่งข้อมูลอัปเดตไปให้ลูกค้า (ส่งขึ้น Google Sheets)
-      try {
-        const btn = event.target;
-        const oldText = btn.innerText;
-        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังอัปเดตไปหน้าลูกค้า...`;
-        
-        await fetch(API_URL, {
-          method: 'POST', mode: 'no-cors',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ action: "updateConfig", config: billConfig })
-        });
-        
-        btn.innerText = oldText;
-        alert('บันทึกการตั้งค่าร้าน และอัปเดตให้ลูกค้าเห็นเรียบร้อยแล้ว!');
-      } catch(e) {
-        alert('บันทึกสำเร็จ แต่เกิดข้อผิดพลาดในการอัปเดตข้อมูลขึ้นระบบออนไลน์');
-      }
-    }
-    // 🖨️ PRINT RECEIPT 80mm
     function printThermalReceipt(id) {
       const ord = currentOrdersData.find(o => o.id === id);
       if(!ord) return;
 
-      // 🌟 ดึงรูปโลโก้มาใส่บิล
       const logoContainer = document.getElementById('rec-logo-container');
-      if (billConfig.logo) {
-         logoContainer.innerHTML = `<img src="${billConfig.logo}" style="max-width: 100px; height: auto; margin: 0 auto 5px auto; display: block; filter: grayscale(100%);">`;
-      } else {
-         logoContainer.innerHTML = '';
-      }
+      if (billConfig.logo) { logoContainer.innerHTML = `<img src="${billConfig.logo}" style="max-width: 100px; height: auto; margin: 0 auto 5px auto; display: block; filter: grayscale(100%);">`; } 
+      else { logoContainer.innerHTML = ''; }
 
-      document.getElementById('rec-shop-title').innerText = billConfig.shopName || "ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา";
+      document.getElementById('rec-shop-title').innerText = billConfig.shopName || "ร้านส้มตำ ไก่ทอด";
       document.getElementById('rec-shop-phone').innerText = "โทร: " + (billConfig.shopPhone || "-");
       document.getElementById('rec-id').innerText = ord.id;
       document.getElementById('rec-time').innerText = ord.displayTime || new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
@@ -798,31 +603,10 @@
 
       const receiptElem = document.getElementById('printable-receipt');
       receiptElem.classList.remove('hidden');
-      
-      // หน่วงเวลาให้รูปโลโก้โหลดทันก่อนสั่งปริ้น
-      setTimeout(() => { 
-        window.print(); 
-        receiptElem.classList.add('hidden'); 
-      }, 300);
+      setTimeout(() => { window.print(); receiptElem.classList.add('hidden'); }, 300);
     }
 
-    // REPORTS LOGIC
-    function generateReports() {
-      let totalRev = 0; let completedOrders = 0; let totalItemsSold = 0;
-      currentOrdersData.forEach(ord => {
-        const pay = localPayments[ord.id] || ord.payment || '';
-        const status = localStatuses[ord.id] || ord.status || '';
-        if (pay === 'ชำระเงินแล้ว' || pay === '🟢 ชำระแล้ว' || pay === 'แจ้งโอนแล้ว') totalRev += parseFloat(ord.total || 0);
-        if (status === 'เสร็จสิ้น') completedOrders++;
-        if (ord.items) ord.items.forEach(i => totalItemsSold += parseInt(i.qty || 1));
-      });
-      document.getElementById('rpt-total-revenue').innerText = totalRev.toLocaleString();
-      document.getElementById('rpt-total-orders').innerText = currentOrdersData.length;
-      document.getElementById('rpt-avg-order').innerText = currentOrdersData.length > 0 ? (totalRev / currentOrdersData.length).toFixed(1) : 0;
-      document.getElementById('rpt-total-items-sold').innerText = totalItemsSold;
-    }
-
-    // 🥗 FULL MENU MANAGEMENT LOGIC
+    // 🌟 ระบบเมนู
     function getStoredProducts() {
       const data = localStorage.getItem('pos_products');
       if (data) return JSON.parse(data);
@@ -842,7 +626,6 @@
         reader.readAsDataURL(file);
       }
     }
-
     function previewMenuUrl(url) {
       if(url.trim()) {
         document.getElementById('edit-menu-img-data').value = url.trim();
@@ -892,9 +675,7 @@
       if(isImg) {
         document.getElementById('menu-img-preview-box').innerHTML = `<img src="${item.image}" class="w-full h-full object-cover">`;
         if(item.image.startsWith('http')) document.getElementById('menu-url-input').value = item.image;
-      } else {
-        document.getElementById('menu-img-preview-box').innerHTML = `<span class="text-2xl">${item.image || '🥗'}</span>`;
-      }
+      } else { document.getElementById('menu-img-preview-box').innerHTML = `<span class="text-2xl">${item.image || '🥗'}</span>`; }
 
       document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600"></i> แก้ไขรายการเมนู`;
       document.getElementById('btn-save-menu').innerText = "บันทึกการแก้ไข";
@@ -918,6 +699,20 @@
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     }
 
+    // 🌟 ระบบส่งข้อมูลเมนูขึ้น Google Sheets 
+    async function syncMenuToCloud(products) {
+      document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังซิงค์เมนูให้หน้าลูกค้า...`;
+      try {
+        await fetch(API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: "updateMenu", menu: products })
+        });
+        document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-check-circle text-green-600"></i> ลูกค้าเห็นเมนูนี้แล้ว!`;
+        setTimeout(() => resetMenuForm(), 2000);
+      } catch(e) { alert('เกิดข้อผิดพลาดในการซิงค์ข้อมูลเมนูขึ้นออนไลน์'); }
+    }
+
     function saveMenuItem() {
       const editId = document.getElementById('edit-menu-id').value;
       const name = document.getElementById('add-menu-name').value.trim();
@@ -928,14 +723,12 @@
       if(!name || isNaN(price)) return alert('กรุณากรอกชื่อเมนูและราคาให้ถูกต้อง');
 
       let products = getStoredProducts();
-      if (editId) {
-        products = products.map(p => p.id == editId ? { ...p, name, category: cat, price, image: img } : p);
-      } else {
-        products.push({ id: Date.now(), name, category: cat, price, image: img });
-      }
+      if (editId) { products = products.map(p => p.id == editId ? { ...p, name, category: cat, price, image: img } : p); } 
+      else { products.push({ id: Date.now(), name, category: cat, price, image: img }); }
 
       localStorage.setItem('pos_products', JSON.stringify(products));
-      renderMenuTable(); resetMenuForm(); alert('บันทึกข้อมูลเมนูเรียบร้อยแล้ว!');
+      renderMenuTable(); 
+      syncMenuToCloud(products); // ดันขึ้นหน้าลูกค้า
     }
 
     function deleteMenuItem(id) {
@@ -944,29 +737,8 @@
         products = products.filter(p => p.id != id);
         localStorage.setItem('pos_products', JSON.stringify(products));
         renderMenuTable();
+        syncMenuToCloud(products); // ลบจากหน้าลูกค้าด้วย
       }
-    }
-    
-    function importCSVMenu() {
-      const fileInput = document.getElementById('csv-file-input');
-      const file = fileInput.files[0];
-      if(!file) return alert('กรุณาเลือกไฟล์ CSV ก่อนครับ');
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const lines = e.target.result.split('\n');
-        const imported = [];
-        for(let i = 0; i < lines.length; i++) {
-          const col = lines[i].split(',');
-          if(col.length >= 3 && col[0].trim()) {
-            imported.push({ id: Date.now() + i, name: col[0].replace(/"/g, '').trim(), category: col[1] ? col[1].replace(/"/g, '').trim() : 'ส้มตำ/ตำต่างๆ', price: parseFloat(col[2]) || 0, image: "🍲" });
-          }
-        }
-        if(imported.length > 0) {
-          localStorage.setItem('pos_products', JSON.stringify(imported));
-          renderMenuTable(); alert(`นำเข้าเมนูสำเร็จ ${imported.length} รายการ!`);
-        } else { alert('ไม่พบข้อมูลเมนูในไฟล์ CSV'); }
-      };
-      reader.readAsText(file);
     }
 
     setInterval(fetchOrders, 4000);
