@@ -276,7 +276,56 @@
           presetMenuList.map((m, idx) => `<option value="${idx}">${m.name} (${m.category}) - ฿${m.price}</option>`).join('');
       }
     }
+// 🌟 ระบบอ่านและอัปโหลดไฟล์ CSV เข้าสู่ระบบและซิงค์ขึ้น Google Sheets
+    function handleCsvUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
 
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r\n|\n/);
+        let products = getStoredProducts();
+        let addedCount = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          // แยกด้วยเครื่องหมายจุลภาค (Comma)
+          const cols = line.split(',').map(c => c.trim());
+          // รูปแบบ CSV ที่คาดหวัง: ชื่อเมนู, หมวดหมู่, ราคา, (รูปภาพหรืออีโมจิ-ถ้ามี)
+          if (cols.length >= 3) {
+            const name = cols[0];
+            const category = cols[1];
+            const price = parseFloat(cols[2]);
+            const image = cols[3] || '🍲';
+
+            if (name && !isNaN(price)) {
+              products.push({
+                id: Date.now() + i,
+                name: name,
+                category: category || 'ทั่วไป',
+                price: price,
+                image: image
+              });
+              addedCount++;
+            }
+          }
+        }
+
+        if (addedCount > 0) {
+          localStorage.setItem('pos_products', JSON.stringify(products));
+          renderMenuTable();
+          syncMenuToCloud(products); // ส่งข้ามไปอัปเดตหน้าลูกค้าและ Google Sheets ทันที
+          alert(`นำเข้าเมนูจาก CSV สำเร็จ ${addedCount} รายการ!`);
+        } else {
+          alert('ไม่พบข้อมูลที่ถูกต้องในไฟล์ CSV (รูปแบบที่ถูกต้อง: ชื่อเมนู,หมวดหมู่,ราคา)');
+        }
+        event.target.value = ''; // รีเซ็ตฟอร์มไฟล์
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
     function onSelectPresetMenu(elem) {
       const val = elem.value;
       if (val !== "") {
