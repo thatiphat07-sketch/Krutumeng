@@ -996,12 +996,18 @@
       if (sessionStorage.getItem('admin_logged') !== 'true') return;
       const list = document.getElementById('admin-orders-list');
       if (!list) return;
+
+      // ป้องกันการเรียกโหลดซ้อนกัน
+      if (fetchOrders._running) return;
+      fetchOrders._running = true;
+
       if (!API_URL) {
         list.innerHTML = '<p class="text-center text-red-600 col-span-2 py-8">ยังไม่ได้กำหนด API_URL</p>';
+        fetchOrders._running = false;
         return;
       }
 
-      list.innerHTML = '<p class="text-center text-xs text-gray-400 col-span-2 py-8">กำลังโหลดออเดอร์...</p>';
+      // ไม่ล้างรายการเดิมระหว่างรอข้อมูลใหม่
       try {
         const response = await fetch(API_URL, { method: 'GET', cache: 'no-store' });
         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -1129,7 +1135,13 @@
         updateReports();
       } catch (error) {
         console.error('fetchOrders error:', error);
-        list.innerHTML = `<div class="col-span-2 text-center text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-4">โหลดออเดอร์ไม่สำเร็จ: ${error.message}<br><span class="text-gray-600">ตรวจสอบว่า Apps Script เปิดให้เข้าถึงได้ และ doGet() ส่ง JSON กลับมา</span></div>`;
+
+        // ถ้ามีรายการเดิมอยู่ ให้คงรายการไว้ ไม่ทำให้หน้าจอกระพริบ/หาย
+        if (!currentOrdersData || currentOrdersData.length === 0) {
+          list.innerHTML = `<div class="col-span-2 text-center text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-4">โหลดออเดอร์ไม่สำเร็จ: ${error.message}<br><span class="text-gray-600">ระบบจะลองโหลดใหม่อัตโนมัติ</span></div>`;
+        }
+      } finally {
+        fetchOrders._running = false;
       }
     }
 
@@ -1618,7 +1630,7 @@ function toggleOrderSelect(id) {
 
 
 
-    setInterval(fetchOrders, 4000);
+    setInterval(fetchOrders, 10000); // โหลดทุก 10 วินาที โดยไม่ล้างรายการเดิม
 
   </script>
 
