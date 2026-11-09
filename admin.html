@@ -1,23 +1,14 @@
 <!DOCTYPE html>
-
 <html lang="th">
-
 <head>
-
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>หลังร้าน POS Dashboard & รายงาน - ร้านส้มตำทั่วไป</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
  <style>
     @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
-
     /* 🖨️ Thermal Print 80mm Setup */
     @media print {
       html, body {
@@ -48,25 +39,15 @@
     }
   </style>
 </head>
-
 <body class="text-gray-800 p-2 md:p-4">
-
-
-
   <script>
-
     // ⚠️ นำ URL ของ Apps Script (Code.gs) อันล่าสุดมาใส่ตรงนี้นะครับ
 
     const API_URL = "https://script.google.com/macros/s/AKfycbyeDO79jBAOBkIAb1Px-gqOKWkFu9YkG75YA1rvG2bZrErYaQGRDf5iGe72rSUovTeIRA/exec";
 
     const ADMIN_PIN = "1234"; // 🔐 PIN เข้าสู่ระบบแอดมิน
-
   </script>
-
-
-
-  <!-- 🔒 LOGIN MODAL SCREEN -->
-
+    <!-- 🔒 LOGIN MODAL SCREEN -->
   <div id="login-modal" class="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4">
 
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-gray-100">
@@ -94,19 +75,11 @@
     </div>
 
   </div>
-
-
-
   <!-- 🏪 MAIN DASHBOARD CONTENT -->
-
   <div id="admin-content" class="max-w-5xl mx-auto space-y-4 hidden">
-
     <!-- Top Header -->
-
     <header class="bg-gradient-to-r from-slate-800 via-slate-900 to-orange-950 text-white rounded-2xl p-4 shadow-lg flex justify-between items-center">
-
       <div class="flex items-center space-x-3">
-
         <div id="header-logo-box" class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xl shadow overflow-hidden">🌶️</div>
 
         <div>
@@ -810,27 +783,15 @@
       }
 
     }
-
-
-
     function previewQRImage(event) {
-
       const file = event.target.files[0];
-
       if (file) {
-
         const reader = new FileReader();
-
         reader.onload = function(e) {
-
           tempQRBase64 = e.target.result;
-
           document.getElementById('qr-preview-box').innerHTML = `<img src="${tempQRBase64}" class="w-full h-full object-cover">`;
-
         };
-
         reader.readAsDataURL(file);
-
       }
 
     }
@@ -1562,71 +1523,35 @@ function toggleOrderSelect(id) {
         });
 
         document.getElementById('form-menu-title').innerHTML = `<i class="fa-solid fa-check-circle text-green-600"></i> ลูกค้าเห็นเมนูนี้แล้ว!`;
-
         setTimeout(() => resetMenuForm(), 2000);
-
       } catch(e) { alert('เกิดข้อผิดพลาดในการซิงค์ข้อมูลเมนูขึ้นออนไลน์'); }
-
     }
-
-
-
-    function saveMenuItem() {
-
+    function saveMenuItem() 
       const editId = document.getElementById('edit-menu-id').value;
 
       const name = document.getElementById('add-menu-name').value.trim();
-
       const cat = document.getElementById('add-menu-cat').value;
-
       const price = parseFloat(document.getElementById('add-menu-price').value);
-
       const img = document.getElementById('edit-menu-img-data').value || '🍲';
-
-
-
       if(!name || isNaN(price)) return alert('กรุณากรอกชื่อเมนูและราคาให้ถูกต้อง');
-
-
-
       let products = getStoredProducts();
-
       if (editId) { products = products.map(p => p.id == editId ? { ...p, name, category: cat, price, image: img } : p); } 
-
       else { products.push({ id: Date.now(), name, category: cat, price, image: img }); }
-
-
-
       localStorage.setItem('pos_products', JSON.stringify(products));
-
-      renderMenuTable(); 
-
+      renderMenuTable();
       syncMenuToCloud(products); // ดันขึ้นหน้าลูกค้า
-
     }
-
-
-
     function deleteMenuItem(id) {
-
       if(confirm('ยืนยันลบเมนูนี้ใช่หรือไม่?')) {
-
         let products = getStoredProducts();
-
         products = products.filter(p => p.id != id);
-
         localStorage.setItem('pos_products', JSON.stringify(products));
-
         renderMenuTable();
-
         syncMenuToCloud(products); // ลบจากหน้าลูกค้าด้วย
 
       }
 
     }
-
-
-
     setInterval(fetchOrders, 10000); // โหลดทุก 10 วินาที โดยไม่ล้างรายการเดิม
 
   </script>
