@@ -753,35 +753,7 @@
       document.getElementById('btn-save-menu').className = "flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm";
       document.getElementById('btn-cancel-edit').classList.add('hidden');
     }
-// ฟังก์ชันดึงข้อมูลออเดอร์จากหลังบ้าน
-async function fetchAdminOrders() {
-  try {
-    let response = await fetch(API_URL);
-    let result = await response.json();
-    
-    console.log("ข้อมูลที่แอดมินดึงมาได้:", result);
-    
-    if (result.status === "success" && result.orders) {
-      renderOrders(result.orders);
-    } else {
-      console.warn("ไม่พบข้อมูลออเดอร์ในระบบ");
-    }
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์:", error);
-  }
-}
 
-// ฟังก์ชันนำข้อมูลออเดอร์มาสร้างแถวตาราง HTML
-function renderOrders(ordersList) {
-  var tbody = document.getElementById('orderTableBody');
-  if (!tbody) return;
-  
-  tbody.innerHTML = ''; // ล้างข้อมูลเก่า
-  
-  if (ordersList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-gray-400">ยังไม่มีรายการออเดอร์ในขณะนี้</td></tr>';
-    return;
-  }
   
   // เรียงลำดับจากออเดอร์ล่าสุดขึ้นมาด้านบน (ถ้าต้องการ)
   ordersList.reverse().forEach(function(order) {
