@@ -17,12 +17,20 @@
     .map-box { height: 180px; width: 100%; border-radius: 12px; margin-top: 6px; z-index: 10;}
     .star-rating i { cursor: pointer; transition: color 0.2s; }
     .star-rating i:hover { color: #f59e0b !important; }
+    /* Loading Spinner Overlay */
+    #global-loader { transition: opacity 0.3s ease; }
   </style>
 </head>
-<body class="text-gray-800 pb-24">
+<body class="text-gray-800 pb-24 relative min-h-screen">
+
+  <!-- 🌟 ระบบ Loading 🌟 -->
+  <div id="global-loader" class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center">
+    <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-3xl animate-bounce mb-3 shadow-lg">🌶️</div>
+    <h2 class="text-orange-600 font-bold">กำลังอัปเดตเมนูสดใหม่...</h2>
+  </div>
 
   <script>
-    // ⚠️ นำ URL ของ Apps Script (Code.gs) อันล่าสุดมาใส่ตรงนี้
+    // ⚠️ นำ URL ของ Apps Script (Code.gs) อันล่าสุดมาใส่ตรงนี้ ⚠️
     const API_URL = "https://script.google.com/macros/s/AKfycbynubN4dtJJMjg-ea6osIhjGQw5Y6wE_q-8QJJkN7pQApGyHInSt7CyUzpe0La8klTj/exec";
     let currentSubmittedOrderId = localStorage.getItem('last_active_order_id') || null;
     let paymentCheckInterval = null;
@@ -212,7 +220,7 @@
           </select>
         </div>
 
-        <!-- 🌟 เพิ่มระบบเลือกวิธีชำระเงินตรงนี้ -->
+        <!-- 🌟 ระบบเลือกวิธีชำระเงิน -->
         <div>
           <label class="block text-xs font-semibold text-gray-700 mb-1">วิธีชำระเงิน *</label>
           <select id="payment-method" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-orange-500 bg-white font-bold text-orange-700">
@@ -330,39 +338,54 @@
   </div>
 
   <script>
-    // 🌟 โค้ด JavaScript ทั้งหมด 🌟
-    const defaultCategories = ["ทั้งหมด", "ส้มตำ", "ตำเส้น", "ตำเครื่อง", "ของทอด/ทานเล่น", "อาหารจานเดียว", "เครื่องดื่ม"];
-    let shopCategories = JSON.parse(localStorage.getItem('pos_shop_categories')) || defaultCategories;
+    // 🌟 1. ประกาศตัวแปรรับข้อมูลจาก Google Sheets (เริ่มต้นเป็นค่าว่างก่อน)
+    let shopCategories = ["ทั้งหมด"];
     let activeCat = 'ทั้งหมด';
-
-    const defaultProducts = [
-      { id: 1, name: "ส้มตำไทย", category: "ส้มตำ", price: 50, image: "🥗" },
-      { id: 2, name: "ตำปูปลาร้า", category: "ส้มตำ", price: 50, image: "🌶️" },
-      { id: 3, name: "ตำเส้นเล็กหมูยอ", category: "ตำเส้น", price: 60, image: "🍜" },
-      { id: 4, name: "ตำมาม่าทะเล", category: "ตำเส้น", price: 80, image: "🍝" },
-      { id: 5, name: "ตำกุ้งสด", category: "ตำเครื่อง", price: 100, image: "🦐" },
-      { id: 6, name: "ไก่ทอดหาดใหญ่", category: "ของทอด/ทานเล่น", price: 45, image: "🍗" }
-    ];
-
-    const products = JSON.parse(localStorage.getItem('pos_products')) || defaultProducts;
+    let products = [];
+    let billConfig = {};
     let cart = [];
     
     let userAccounts = JSON.parse(localStorage.getItem('pos_user_accounts') || '{}');
     let currentUser = JSON.parse(localStorage.getItem('pos_current_user') || 'null');
 
-    const billConfig = JSON.parse(localStorage.getItem('pos_bill_config')) || {
-      shopName: "ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา",
-      bankName: "กสิกรไทย",
-      accName: "ร้านส้มตำ ไก่ทอด",
-      accNum: "123-4-56789-0",
-      promptpayName: "ร้านส้มตำ ไก่ทอด",
-      promptpayNum: "081-394-8240",
-      qrImage: "",
-      logo: ""
-    };
+    // 🌟 2. ฟังก์ชันหลักที่จะยิงไปดึงข้อมูลทุกอย่างมาแสดง
+    async function loadDataFromCloud() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        
+        // 2.1 โหลดเมนู
+        if (data.menu && data.menu.length > 0) {
+          products = data.menu;
+          // สร้างหมวดหมู่อัตโนมัติจากที่มีในเมนู 
+          const uniqueCats = new Set(["ทั้งหมด"]);
+          products.forEach(p => { if(p.category) uniqueCats.add(p.category); });
+          shopCategories = Array.from(uniqueCats);
+        }
 
-    if (billConfig.shopName) document.getElementById('shop-header-title').innerText = billConfig.shopName;
-    if (billConfig.logo) document.getElementById('shop-logo-box').innerHTML = `<img src="${billConfig.logo}" class="w-full h-full object-cover">`;
+        // 2.2 โหลดตั้งค่าร้าน
+        if (data.config && Object.keys(data.config).length > 0) {
+          billConfig = data.config;
+          if (billConfig.shopName) document.getElementById('shop-header-title').innerText = billConfig.shopName;
+          if (billConfig.logo) document.getElementById('shop-logo-box').innerHTML = `<img src="${billConfig.logo}" class="w-full h-full object-cover">`;
+        }
+
+        // 2.3 สั่งวาดเมนูและหมวดหมู่ขึ้นหน้าจอ
+        renderCategories();
+        renderProducts();
+
+      } catch(e) {
+        console.error("โหลดข้อมูลจาก Cloud ไม่สำเร็จ", e);
+        // ถ้าโหลดพัง ให้ไปดึงของเก่าจาก Cache (ถ้ามี)
+        products = JSON.parse(localStorage.getItem('pos_products')) || [];
+        renderCategories();
+        renderProducts();
+      } finally {
+        // โหลดเสร็จ ซ่อนหน้าจอหมุนๆ
+        document.getElementById('global-loader').style.opacity = '0';
+        setTimeout(() => document.getElementById('global-loader').style.display = 'none', 300);
+      }
+    }
 
     function updateUIForAuth() {
       if (currentUser) {
@@ -400,7 +423,6 @@
       if (!isLogin) initMap('reg');
     }
 
-    // 🔴 ฟังก์ชันออกจากระบบ
     function logoutUser() {
       if(confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
         currentUser = null;
@@ -582,7 +604,7 @@
       const list = activeCat === 'ทั้งหมด' ? products : products.filter(p => p.category === activeCat);
       
       if (list.length === 0) {
-        grid.innerHTML = `<p class="col-span-3 text-center text-xs text-gray-400 py-8">ไม่มีรายการในหมวดหมู่นี้</p>`;
+        grid.innerHTML = `<p class="col-span-3 text-center text-xs text-gray-400 py-8">ยังไม่มีรายการเมนู</p>`;
         return;
       }
 
@@ -696,7 +718,6 @@
       }
     }
 
-    // 🌟 ระบบสร้างออเดอร์ใหม่ (อัปเดตระบบชำระเงิน)
     async function submitOrder() {
       if (!currentUser) return openAuthModal();
       if (cart.length === 0) return alert('กรุณาเลือกรายการอาหารก่อนครับ');
@@ -710,7 +731,7 @@
       localStorage.setItem('last_active_order_id', orderId);
 
       const orderType = document.getElementById('order-type').value;
-      const paymentMethod = document.getElementById('payment-method').value; // ดึงค่าวิธีชำระเงิน
+      const paymentMethod = document.getElementById('payment-method').value; 
       const userNote = document.getElementById('order-note').value.trim();
       
       let fullNote = userNote;
@@ -719,7 +740,6 @@
         fullNote = `[ที่อยู่: ${currentUser.address}] [แผนที่: ${mapUrl}] ${userNote}`;
       }
       
-      // เพิ่มหมายเหตุให้แอดมินรู้ว่าเลือกชำระเงินแบบไหน
       fullNote = `[วิธีชำระ: ${paymentMethod}] ` + fullNote;
 
       const orderData = {
@@ -777,7 +797,6 @@
       } catch(e) {}
     }
 
-    // 🌟 ระบบเช็กสถานะ (ซ่อน QR หากเลือกเก็บปลายทาง)
     function startPaymentCheck() {
       if (paymentCheckInterval) clearInterval(paymentCheckInterval);
       
@@ -806,14 +825,12 @@
             } else if (payStatus === 'เก็บปลายทาง' || payStatus.includes('ปลายทาง')) {
               payBadge.className = "inline-block px-3 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-full text-xs";
               payBadge.innerText = "สถานะการเงิน: 💵 เตรียมเงินสดชำระปลายทาง";
-              // ซ่อนโซน QR และเลขบัญชี
               document.getElementById('bank-details-box').style.display = 'none';
               document.getElementById('qr-box').style.display = 'none';
               document.getElementById('btn-notify-pay').style.display = 'none';
             } else {
               payBadge.className = "inline-block px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-full text-xs";
               payBadge.innerText = "สถานะการเงิน: 🔴 รอชำระเงิน (โอนผ่าน QR)";
-              // เปิดแสดง QR และเลขบัญชีตามปกติ
               document.getElementById('bank-details-box').style.display = 'block';
               document.getElementById('qr-box').style.display = '';
               document.getElementById('btn-notify-pay').style.display = 'flex';
@@ -876,11 +893,10 @@
       if (paymentCheckInterval) clearInterval(paymentCheckInterval);
     }
 
-    // เมื่อโหลดหน้าเว็บ ให้ทำ 3 อย่างนี้
+    // 🌟 เมื่อโหลดหน้าเว็บ ให้ดึงข้อมูลจาก Cloud ทันที
     window.onload = function() {
       updateUIForAuth();
-      renderCategories();
-      renderProducts();
+      loadDataFromCloud(); 
     };
   </script>
 </body>
