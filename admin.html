@@ -1,78 +1,73 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>หลังร้าน POS Dashboard & รายงาน - ร้านส้มตำทั่วไป</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
- <style>
-    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
-    /* 🖨️ Thermal Print 80mm Setup */
-    @media print {
-      html, body {
-        height: auto !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      @page { size: 80mm auto; margin: 0mm !important; }
-      body * { visibility: hidden !important; }
-      #printable-receipt, #printable-receipt * { 
-        visibility: visible !important; 
-        display: block !important;
-      }
-      #printable-receipt {
-        position: absolute !important; 
-        left: 0 !important; 
-        top: 0 !important; 
-        width: 72mm !important;
-        padding: 2mm !important; 
-        margin: 0 auto !important; 
-        color: #000 !important; 
-        background: #fff !important;
-        font-family: 'Courier New', Courier, monospace, 'Prompt', sans-serif;
-        font-size: 11px !important; 
-        line-height: 1.2 !important;
-      }
-    }
-  </style>
+
+  <style>
+
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+    body { font-family: 'Prompt', sans-serif; background-color: #F8FAFC; }
+
+
+
+    /* 🖨️ Thermal Print 80mm Setup */
+
+    @media print {
+
+      html, body { height: auto !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
+
+      @page { size: 80mm auto; margin: 0mm !important; }
+
+      body * { visibility: hidden !important; }
+
+      #printable-receipt, #printable-receipt * { visibility: visible !important; display: block !important; }
+
+      #printable-receipt {
+
+        position: absolute !important; left: 0 !important; top: 0 !important; width: 72mm !important;
+
+        padding: 2mm !important; margin: 0 auto !important; color: #000 !important; background: #fff !important;
+
+        font-family: 'Courier New', Courier, monospace, 'Prompt', sans-serif;
+
+        font-size: 11px !important; line-height: 1.2 !important;
+
+      }
+
+    }
+
+  </style>
+
 </head>
+
 <body class="text-gray-800 p-2 md:p-4">
+
+
+
   <script>
+
     // ⚠️ นำ URL ของ Apps Script (Code.gs) อันล่าสุดมาใส่ตรงนี้นะครับ
 
     const API_URL = "https://script.google.com/macros/s/AKfycbyeDO79jBAOBkIAb1Px-gqOKWkFu9YkG75YA1rvG2bZrErYaQGRDf5iGe72rSUovTeIRA/exec";
 
     const ADMIN_PIN = "1234"; // 🔐 PIN เข้าสู่ระบบแอดมิน
-  </script>
-<!-- ส่วนหน้าจอสำหรับกรอกรหัสผ่าน (ถ้ายังไม่เข้าสู่ระบบ) -->
-<div id="adminLoginSection" class="max-w-md mx-auto mt-20 p-6 bg-white rounded-2xl shadow-md border border-gray-100">
-  <h2 class="text-xl font-bold mb-4 text-center text-gray-800">🔐 เข้าสู่ระบบผู้ดูแลระบบ</h2>
-  <input 
-    type="password" 
-    id="adminPassword" 
-    placeholder="กรอกรหัสผ่านแอดมิน..." 
-    class="w-full px-4 py-3 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-  <button 
-    onclick="checkAdminLogin()" 
-    class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition"
-  >
-    เข้าสู่ระบบ
-  </button>
-</div>
 
-<!-- ส่วนตารางแดชบอร์ดแอดมิน (จะถูกซ่อนไว้จนกว่าจะกรอกรหัสผ่านถูกต้อง) -->
-<div id="adminDashboardSection" class="hidden">
-  <!-- โค้ดตารางแสดงออเดอร์เดิมของคุณกัปตัน -->
-</div>
-  </div>
-  <!-- 🏪 MAIN DASHBOARD CONTENT -->
-  <div id="admin-content" class="max-w-5xl mx-auto space-y-4 hidden">
-    <!-- Top Header -->
-    <header class="bg-gradient-to-r from-slate-800 via-slate-900 to-orange-950 text-white rounded-2xl p-4 shadow-lg flex justify-between items-center">
+  </script>
+
+
+
   <!-- 🔒 LOGIN MODAL SCREEN -->
 
   <div id="login-modal" class="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4">
@@ -102,6 +97,33 @@
     </div>
 
   </div>
+
+
+
+  <!-- 🏪 MAIN DASHBOARD CONTENT -->
+
+  <div id="admin-content" class="max-w-5xl mx-auto space-y-4 hidden">
+
+    <!-- Top Header -->
+
+    <header class="bg-gradient-to-r from-slate-800 via-slate-900 to-orange-950 text-white rounded-2xl p-4 shadow-lg flex justify-between items-center">
+
+      <div class="flex items-center space-x-3">
+
+        <div id="header-logo-box" class="w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xl shadow overflow-hidden">🌶️</div>
+
+        <div>
+
+          <h1 class="font-bold text-base md:text-lg">ระบบจัดการหลังร้าน (POS Real-time)</h1>
+
+          <p class="text-xs text-gray-300" id="shop-sub-title">ร้านส้มตำ ไก่ทอด หมูทอด ข้าวกระเพรา</p>
+
+        </div>
+
+      </div>
+
+      <button onclick="adminLogout()" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+
     </header>
 
 
@@ -791,15 +813,27 @@
       }
 
     }
+
+
+
     function previewQRImage(event) {
+
       const file = event.target.files[0];
+
       if (file) {
+
         const reader = new FileReader();
+
         reader.onload = function(e) {
+
           tempQRBase64 = e.target.result;
+
           document.getElementById('qr-preview-box').innerHTML = `<img src="${tempQRBase64}" class="w-full h-full object-cover">`;
+
         };
+
         reader.readAsDataURL(file);
+
       }
 
     }
@@ -927,10 +961,6 @@
       if(tab === 'settings') loadBillConfigToForm();
 
     }
-
-
-
-   
 
 
 
