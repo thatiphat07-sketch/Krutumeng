@@ -405,6 +405,23 @@
         document.getElementById('header-user-name').innerText = "เข้าสู่ระบบ";
       }
     }
+    // ฟังก์ชันค้นหาและกรองเมนูอาหารแบบเรียลไทม์
+function filterMenu() {
+  var input = document.getElementById('searchMenuInput');
+  var filter = input.value.toLowerCase().trim();
+  
+  // สมมติว่าการ์ดสินค้าแต่ละชิ้นในหน้าเว็บมี class ชื่อ "menu-item" และมี attribute data-name เก็บชื่อเมนู
+  var menuItems = document.querySelectorAll('.menu-item'); 
+  
+  menuItems.forEach(function(item) {
+    var name = item.getAttribute('data-name') || item.innerText.toLowerCase();
+    if (name.indexOf(filter) > -1) {
+      item.style.display = ""; // แสดงเมนูที่ตรงกับคำค้นหา
+    } else {
+      item.style.display = "none"; // ซ่อนเมนูที่ไม่ตรง
+    }
+  });
+}
 
     function handleUserHeaderClick() {
       if (currentUser) openEditProfileModal();
