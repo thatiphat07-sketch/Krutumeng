@@ -175,7 +175,15 @@
 
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="product-grid"></div>
   </main>
-
+<div class="mb-4 px-2">
+  <input 
+    type="text" 
+    id="searchMenuInput" 
+    oninput="filterMenu()" 
+    placeholder="🔍 ค้นหาเมนูอาหาร..." 
+    class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+  >
+</div>
   <!-- Bottom Cart Bar -->
   <div id="bottom-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl p-3 z-30 hidden">
     <div class="max-w-3xl mx-auto flex justify-between items-center">
